@@ -1,0 +1,12 @@
+/* Pull tldraw's own chrome onto this app's palette. Only the few variables the
+   canvas actually shows with `hideUi` set: the backdrop and the selection.
+   `.tl-theme__dark` sits inside `.tl-container`, so it has to be the target —
+   redefining these on the container is shadowed by the nearer definition. */
+.tl-container,
+.tl-theme__dark {
+  --tl-color-background: var(--color-base);
+  --tl-color-selected: var(--color-accent);
+  --tl-color-selection-stroke: var(--color-accent);
+  --tl-color-selection-fill: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --tl-color-focus: var(--color-accent);
+}
