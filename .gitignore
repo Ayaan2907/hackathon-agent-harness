@@ -45,3 +45,6 @@ __pycache__/
 .claude/settings.local.json
 .claude/worktrees/
 .gstack/
+
+# Decision ledger written by the record_decision MCP tool at runtime.
+.outside/
