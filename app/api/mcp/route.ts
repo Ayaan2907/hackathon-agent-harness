@@ -1,6 +1,7 @@
 import { appendFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { z } from 'zod';
+import { LEDGER_AUTH_HEADER, isAuthorised } from '@/lib/council/ledgerAuth';
 
 /**
  * A minimal MCP server, served by this app and attached to the council agent.
@@ -70,6 +71,13 @@ async function recordDecision(args: unknown) {
 const METHOD_NOT_FOUND = -32601;
 
 export async function POST(request: Request) {
+  // The approval gate in the agent spec governs how TrueForge calls this tool.
+  // It does not protect this route, so without this check any HTTP client could
+  // append to the ledger and skip approval entirely.
+  if (!isAuthorised(request.headers.get(LEDGER_AUTH_HEADER))) {
+    return Response.json({ error: 'unauthorised' }, { status: 401 });
+  }
+
   const body = (await request.json()) as { id?: unknown; method?: string; params?: unknown };
   const { id, method } = body;
 

@@ -31,6 +31,17 @@ const schema = z.object({
   TRUEFORGE_BASE_URL: z.url().default('http://localhost:8790'),
   /** Only needed if the harness is deployed behind auth. Local runs need nothing. */
   TRUEFORGE_API_KEY: z.string().optional(),
+  /**
+   * Where the harness should reach this app's MCP endpoint. Never derived from
+   * the incoming request: that URL is caller-controlled, and a poisoned Host
+   * header would register an attacker's server under our name.
+   */
+  APP_BASE_URL: z.url().default('http://localhost:3000'),
+  /**
+   * Shared secret the harness presents to `/api/mcp`. Optional — a random one
+   * is generated per process when unset, so the app boots with no secrets.
+   */
+  LEDGER_SHARED_SECRET: z.string().min(16).optional(),
 });
 
 const parsed = schema.safeParse(stripEmpty(process.env));
