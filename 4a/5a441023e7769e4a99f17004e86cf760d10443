@@ -1,0 +1,25 @@
+lib/council/ledgerAuth.ts
+  s_bbc55387da5bfd::t_5fd630ccec445f 1,12-15,20
+docs/ARCHITECTURE.md
+  s_bbc55387da5bfd::t_ec64f6f11e1252 80-87
+lib/council/ledgerAuth.test.ts
+  s_bbc55387da5bfd::t_5fd630ccec445f 1-36
+lib/config/env.ts
+  s_bbc55387da5bfd::t_5fd630ccec445f 1,42-44,46-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4a5a441023e7769e4a99f17004e86cf760d10443",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
