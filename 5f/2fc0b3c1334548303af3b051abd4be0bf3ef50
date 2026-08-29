@@ -1,0 +1,27 @@
+app/api/mcp/route.ts
+  s_bbc55387da5bfd::t_4d7f0557301ea7 4,74-80
+lib/council/ledgerAuth.ts
+  s_bbc55387da5bfd::t_2f3e4e01b476b7 1-30
+app/api/council/route.ts
+  s_bbc55387da5bfd::t_4d7f0557301ea7 4,74-77,79,86,134-136
+lib/config/env.ts
+  s_bbc55387da5bfd::t_899a692089d4af 34-44
+.env.example
+  s_bbc55387da5bfd::t_899a692089d4af 12-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5f2fc0b3c1334548303af3b051abd4be0bf3ef50",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
