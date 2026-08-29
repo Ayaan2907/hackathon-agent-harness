@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { relative, resolve } from 'node:path';
 import type { Scope } from './types';
 
 /**
@@ -28,9 +28,33 @@ const LEDGER_TOOL = 'record_decision';
 /** The sandbox starts empty, so repo scope clones this to have something to read. */
 const REPO_URL = 'https://github.com/Ayaan2907/hackathon-agent-harness.git';
 
+/**
+ * Persona ids arrive on an HTTP body and are joined into a filesystem path, so
+ * an id like `../../etc/passwd` would read whatever it liked and hand the
+ * contents to the model as instructions. Two independent guards: a strict
+ * shape, and a check that the resolved path really is inside `profiles/`.
+ */
+const PERSONA_ID = /^[a-z0-9][a-z0-9-]*$/;
+
+const PROFILES_DIR = resolve(process.cwd(), 'profiles');
+
 async function personaInstructions(id: string): Promise<string> {
-  const path = join(process.cwd(), 'profiles', id, 'SKILL.md');
-  return readFile(path, 'utf8');
+  if (!PERSONA_ID.test(id)) {
+    throw new Error(`Unknown persona: ${JSON.stringify(id)}`);
+  }
+
+  const path = resolve(PROFILES_DIR, id, 'SKILL.md');
+  const inside = relative(PROFILES_DIR, path);
+  if (inside.startsWith('..') || resolve(PROFILES_DIR, inside) !== path) {
+    throw new Error(`Unknown persona: ${JSON.stringify(id)}`);
+  }
+
+  try {
+    return await readFile(path, 'utf8');
+  } catch {
+    // Do not leak whether some other path exists.
+    throw new Error(`Unknown persona: ${JSON.stringify(id)}`);
+  }
 }
 
 const ROOT_INSTRUCTIONS = `You convene a review council.

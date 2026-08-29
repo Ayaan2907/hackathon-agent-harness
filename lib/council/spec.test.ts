@@ -47,3 +47,30 @@ describe('buildCouncilSpec', () => {
     expect(spec.instructions).toContain('Hostile Reviewer');
   });
 });
+
+describe('buildCouncilSpec persona ids', () => {
+  it.each([
+    ['../../etc/passwd', 'parent traversal'],
+    ['..', 'bare parent'],
+    ['hostile/../../secrets', 'traversal after a valid segment'],
+    ['/etc/passwd', 'absolute path'],
+    ['nested/persona', 'subdirectory'],
+  ])('rejects %s (%s)', async (id) => {
+    // personaIds come straight off an HTTP body and are joined into a
+    // filesystem path, so anything that escapes profiles/ must be refused
+    // before it reaches readFile.
+    await expect(
+      buildCouncilSpec({ scope: 'plan', personaIds: [id], mcpUrl: 'http://localhost:3000/api/mcp' }),
+    ).rejects.toThrow(/persona/i);
+  });
+
+  it('rejects an id that does not exist rather than reading elsewhere', async () => {
+    await expect(
+      buildCouncilSpec({
+        scope: 'plan',
+        personaIds: ['no-such-persona'],
+        mcpUrl: 'http://localhost:3000/api/mcp',
+      }),
+    ).rejects.toThrow(/persona/i);
+  });
+})
