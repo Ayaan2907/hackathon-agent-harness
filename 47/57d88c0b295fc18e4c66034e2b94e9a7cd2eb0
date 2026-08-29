@@ -1,0 +1,29 @@
+.gitignore
+  s_bbc55387da5bfd::t_a3ae732f99980a 48-50
+app/api/mcp/route.ts
+  s_2ac08797584853::t_667a2fc64caf6d 1-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4757d88c0b295fc18e4c66034e2b94e9a7cd2eb0",
+  "prompts": {},
+  "sessions": {
+    "s_2ac08797584853": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "84dc8f60-1be1-49c6-b9fa-e10b5c00666a",
+        "model": "unknown"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    },
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
