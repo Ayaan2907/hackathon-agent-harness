@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 
 /**
@@ -26,11 +27,38 @@ function stripEmpty(source: Record<string, string | undefined>) {
   return Object.fromEntries(Object.entries(source).filter(([, v]) => v !== ''));
 }
 
+/**
+ * A per-process secret, memoised on `globalThis`.
+ *
+ * Next compiles each route into its own module instance, so a module-level
+ * random value differs between `/api/council` and `/api/mcp` — the harness then
+ * presents the secret one route minted and the other rejects it with a 401.
+ * `globalThis` is shared across those instances, so this is one value per
+ * process, which is what "generated per process" has to mean here.
+ */
+function processLedgerSecret(): string {
+  const store = globalThis as typeof globalThis & { __outsideLedgerSecret?: string };
+  store.__outsideLedgerSecret ??= randomBytes(32).toString('hex');
+  return store.__outsideLedgerSecret;
+}
+
 const schema = z.object({
   /** Base URL of the running TrueForge harness. `npx @truefoundry/trueforge` serves :8790. */
   TRUEFORGE_BASE_URL: z.url().default('http://localhost:8790'),
   /** Only needed if the harness is deployed behind auth. Local runs need nothing. */
   TRUEFORGE_API_KEY: z.string().optional(),
+  /**
+   * Where the harness should reach this app's MCP endpoint. Never derived from
+   * the incoming request: that URL is caller-controlled, and a poisoned Host
+   * header would register an attacker's server under our name.
+   */
+  APP_BASE_URL: z.url().default('http://localhost:3000'),
+  /**
+   * Shared secret the harness presents to `/api/mcp`. Defaults to a fresh random
+   * value per process, so the app boots with no secrets configured. Set it
+   * explicitly to keep the harness registration stable across restarts.
+   */
+  LEDGER_SHARED_SECRET: z.string().min(16).default(processLedgerSecret),
 });
 
 const parsed = schema.safeParse(stripEmpty(process.env));

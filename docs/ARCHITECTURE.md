@@ -77,6 +77,14 @@ scheme; when OIDC _is_ configured, the credential is an OIDC ID token.
 | Resume a stream     | `GET /api/v1/sessions/{id}/turns/{turn_id}/subscribe?after_sequence_number=N`  |
 | Read history        | `GET /api/v1/sessions/{id}/events`                                             |
 | Pull a sandbox file | `GET /api/v1/sessions/{id}/turns/{turn_id}/download-sandbox-file?path=`        |
+| Upsert an MCP server | `PUT /api/v1/settings/mcp-servers`, body `{ manifest }`                       |
+
+`PUT /api/v1/settings/mcp-servers` takes the whole manifest with the name inside
+it and replaces any existing entry under that name — unlike agents, there is no
+`/{name}` path for writes (`GET` only). We use the upsert rather than `POST` so a
+registration left by another checkout, port, or process is corrected instead of
+silently reused with a stale URL and a stale credential. Verified against
+`/api/v1/openapi.json` on v0.1.4.
 
 `stream` defaults to **true** and returns `text/event-stream`. Each SSE frame
 carries the event JSON in `data:` and its sequence number in `id:`, so

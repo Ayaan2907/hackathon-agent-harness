@@ -1,0 +1,202 @@
+'use client';
+
+import { useCallback, useRef, useState } from 'react';
+import { planTurn, type Selection } from './planTurn';
+import { mergeApprovals, statusFromTurnDone, type PendingCall } from './events';
+import { parseFrames } from './sse';
+import type { Scope } from './types';
+
+/**
+ * Drives one council ask and everything that follows it.
+ *
+ * One turn produces one SSE stream carrying every voice. Each subagent gets its
+ * own `thread_id`, announced by `thread.created` and closed by `thread.done`,
+ * so the voices are separated by grouping on that id rather than by opening a
+ * connection per persona.
+ *
+ * An approval does not pause the stream — it ends it. The harness closes with
+ * `turn.done` and the decision starts a *new* turn with its own stream. Both
+ * are folded into the same `threads` map so the transcript reads as one
+ * conversation.
+ */
+
+export interface Thread {
+  id: string;
+  /** Subagent name from `thread.created`; the root thread is `main`. */
+  title: string;
+  text: string;
+  done: boolean;
+}
+
+export type Pending = PendingCall[];
+
+type Status = 'idle' | 'streaming' | 'waiting' | 'done' | 'error';
+
+/** Events we act on. Everything else streams past. */
+interface Event {
+  type: string;
+  thread_id?: string | null;
+  content?: string;
+  turn_id?: string;
+  title?: string;
+  agent_info?: { name?: string };
+  state?: { status?: string; output?: { content?: string } };
+  tool_calls?: { id: string; function?: { name?: string } }[];
+}
+
+export function useCouncilStream() {
+  const [threads, setThreads] = useState<Record<string, Thread>>({});
+  const [pending, setPending] = useState<PendingCall[]>([]);
+  const [status, setStatus] = useState<Status>('idle');
+  const [error, setError] = useState<string | undefined>();
+
+  const sessionId = useRef<string | undefined>(undefined);
+  const turnId = useRef<string | undefined>(undefined);
+  /** What the live session was created for, so `planTurn` can spot a change. */
+  const selection = useRef<Selection | undefined>(undefined);
+
+  const upsert = useCallback((id: string, patch: Partial<Thread>) => {
+    setThreads((prev) => {
+      const existing = prev[id] ?? { id, title: id === 'main' ? 'Council' : id, text: '', done: false };
+      return { ...prev, [id]: { ...existing, ...patch, text: existing.text + (patch.text ?? '') } };
+    });
+  }, []);
+
+  const consume = useCallback(
+    async (res: Response) => {
+      const header = res.headers.get('x-session-id');
+      if (header) sessionId.current = header;
+
+      if (!res.body || !res.headers.get('content-type')?.includes('event-stream')) {
+        const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        setError(String(body.error ?? 'harness error'));
+        setStatus('error');
+        return;
+      }
+
+      const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+      let buffer = '';
+
+      const drain = (chunk: string, flush = false) => {
+        buffer += chunk;
+        const { events, rest } = parseFrames(flush ? `${buffer}\n\n` : buffer);
+        buffer = flush ? '' : rest;
+        for (const raw of events) {
+          const event = raw as Event;
+          const id = event.thread_id ?? 'main';
+
+          switch (event.type) {
+            case 'turn.created':
+              if (event.turn_id) turnId.current = event.turn_id;
+              break;
+            case 'thread.created':
+              upsert(id, { title: event.agent_info?.name ?? event.title ?? id });
+              break;
+            case 'model.message.delta':
+              if (event.content) upsert(id, { text: event.content });
+              break;
+            case 'thread.done':
+              // Only carry a title if this event actually has one — otherwise the
+              // name set by thread.created gets replaced with the opaque id.
+              upsert(id, { done: true, ...(event.title ? { title: event.title } : {}) });
+              break;
+            case 'tool.approval_required': {
+              // A turn can park more than once, and the harness rejects a
+              // resume that misses any outstanding call — so accumulate rather
+              // than replace.
+              setPending((prev) => mergeApprovals(prev, event));
+              setStatus('waiting');
+              break;
+            }
+            case 'turn.done': {
+              // Parked for approval is not finished, and a failed turn is not a
+              // success — read the terminal state instead of assuming.
+              const terminal = statusFromTurnDone(event);
+              setStatus((s) => (s === 'waiting' ? 'waiting' : terminal));
+              break;
+            }
+          }
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        drain(value);
+      }
+      // The last frame may arrive without a trailing blank line.
+      if (buffer.trim()) drain('', true);
+    },
+    [upsert],
+  );
+
+  const post = useCallback(
+    async (body: unknown) => {
+      setError(undefined);
+      try {
+        const res = await fetch('/api/council', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        await consume(res);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'stream failed');
+        setStatus('error');
+      }
+    },
+    [consume],
+  );
+
+  const ask = useCallback(
+    (question: string, scope: Scope, personaIds: string[]) => {
+      const plan = planTurn({
+        current: sessionId.current
+          ? { sessionId: sessionId.current, ...selection.current! }
+          : undefined,
+        next: { scope, personaIds },
+      });
+
+      // Forking drops the session so the route builds a fresh spec; continuing
+      // keeps it, and the harness chains the turn onto the session's last one.
+      if (plan.mode === 'new') sessionId.current = undefined;
+      selection.current = { scope, personaIds };
+
+      // The display resets each turn even when the conversation continues — the
+      // agent keeps the context, the columns show only the current answer.
+      setThreads({});
+      setPending([]);
+      setStatus('streaming');
+
+      return post({
+        kind: 'ask',
+        question,
+        scope,
+        personaIds,
+        ...(plan.mode === 'continue' ? { sessionId: plan.sessionId } : {}),
+      });
+    },
+    [post],
+  );
+
+  const decide = useCallback(
+    (decision: 'allow' | 'deny') => {
+      if (pending.length === 0 || !sessionId.current || !turnId.current) return;
+      const calls = pending;
+      setPending([]);
+      setStatus('streaming');
+      // Every parked call, across every subagent thread — the harness rejects
+      // a resume that leaves any of them unanswered.
+      return post({
+        kind: 'approve',
+        sessionId: sessionId.current,
+        previousTurnId: turnId.current,
+        calls: calls.map(({ threadId, toolCallId }) => ({ threadId, toolCallId })),
+        decision,
+      });
+    },
+    [pending, post],
+  );
+
+  return { threads: Object.values(threads), pending, status, error, ask, decide };
+}
