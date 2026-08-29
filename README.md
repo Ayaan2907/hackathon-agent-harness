@@ -88,9 +88,27 @@ docs/ARCHITECTURE.md what was verified against the running harness, and what bit
 
 ## Qodo Code Review Evidence
 
-- Scaffold: [#1](https://github.com/Ayaan2907/hackathon-agent-harness/pull/1)
-- Harness wiring: [#6](https://github.com/Ayaan2907/hackathon-agent-harness/pull/6)
-- What Qodo surfaced and what we changed or dismissed: _pending review_
+Qodo reviews every pull request in this repo. Config: [`.pr_agent.toml`](.pr_agent.toml).
+
+**Representative PR: [#6 — wire streamed council sessions through an approval-gated ledger](https://github.com/Ayaan2907/hackathon-agent-harness/pull/6).**
+
+Qodo found five bugs, two of them security holes we would have shipped: `POST /api/mcp`
+had no authentication, so any HTTP client could call `record_decision` and append to the
+ledger **without passing the approval gate** — the gate governs how TrueForge invokes the
+tool, not the route itself — and the MCP registration URL was built from the
+caller-controlled `Host` header, which would have persisted an attacker's server under our
+name. We fixed all five and dismissed none; the SSE parser fix was rewritten test-first
+after Qodo pointed out that a dropped frame means `tool.approval_required` never arrives
+and the gated write can never be authorised.
+
+| PR | What Qodo reviewed | Outcome |
+|---|---|---|
+| [#1](https://github.com/Ayaan2907/hackathon-agent-harness/pull/1) | Scaffold, CI, open-source floor | Reviewed |
+| [#6](https://github.com/Ayaan2907/hackathon-agent-harness/pull/6) | Council streaming, MCP ledger, approval gate | 5 bugs, all fixed — [decision record](https://github.com/Ayaan2907/hackathon-agent-harness/pull/6#issuecomment-5465144811) |
+| [#7](https://github.com/Ayaan2907/hackathon-agent-harness/pull/7) | Multi-turn sessions, canvas plan | Reviewed |
+
+The five review threads on #6 are resolved against the pushed fixes, and Qodo re-reviewed
+the branch after them.
 
 ## Honest limits
 
