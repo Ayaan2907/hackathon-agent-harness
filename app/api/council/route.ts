@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { env } from '@/lib/config/env';
 import { buildCouncilSpec } from '@/lib/council/spec';
+import { LEDGER_AUTH_HEADER, LEDGER_SECRET } from '@/lib/council/ledgerAuth';
 
 /**
  * Proxies one council ask — and any approval resume — between the browser and
@@ -70,18 +71,19 @@ async function harness(path: string, init: RequestInit) {
  * no manual setup step.
  */
 async function ensureLedgerRegistered(mcpUrl: string) {
-  const res = await fetch(`${API}/settings/mcp-servers`, { headers: headers() });
-  const existing = res.ok ? ((await res.json()).data as { name: string }[]) : [];
-  if (existing.some((s) => s.name === MCP_NAME)) return;
-
+  // Upsert rather than create-if-absent. A registration left by another
+  // checkout, port, or process carries a stale URL and a stale secret, and
+  // matching on name alone would happily reuse it — pointing record_decision at
+  // the wrong server, or at one whose token we no longer hold.
   await harness('/settings/mcp-servers', {
-    method: 'POST',
+    method: 'PUT',
     body: JSON.stringify({
       manifest: {
         type: 'remote',
         name: MCP_NAME,
         url: mcpUrl,
         description: 'Append-only decision ledger for the Outside council.',
+        auth: { type: 'header', headers: { [LEDGER_AUTH_HEADER]: LEDGER_SECRET } },
       },
     }),
   });
@@ -129,7 +131,9 @@ export async function POST(request: Request) {
       return passthrough(turn, { 'x-session-id': body.sessionId });
     }
 
-    const mcpUrl = new URL('/api/mcp', request.url).toString();
+    // From configuration, never from request.url — the incoming Host is
+    // caller-controlled and this URL is persisted in the harness.
+    const mcpUrl = new URL('/api/mcp', env.APP_BASE_URL).toString();
     if (body.scope === 'repo') await ensureLedgerRegistered(mcpUrl);
 
     // A follow-up reuses the session, so the agent keeps the conversation. The
