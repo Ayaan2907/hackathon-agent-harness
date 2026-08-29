@@ -69,6 +69,18 @@ async function recordDecision(args: unknown) {
 
 /** JSON-RPC error codes we actually use. */
 const METHOD_NOT_FOUND = -32601;
+const INVALID_REQUEST = -32600;
+
+/**
+ * The JSON-RPC envelope. Validated before anything is read off it — this is an
+ * externally reachable boundary, so the shape is checked rather than asserted.
+ */
+const Envelope = z.object({
+  jsonrpc: z.literal('2.0').optional(),
+  id: z.union([z.string(), z.number()]).optional(),
+  method: z.string().min(1).optional(),
+  params: z.object({ name: z.string().optional(), arguments: z.unknown().optional() }).optional(),
+});
 
 export async function POST(request: Request) {
   // The approval gate in the agent spec governs how TrueForge calls this tool.
@@ -78,7 +90,14 @@ export async function POST(request: Request) {
     return Response.json({ error: 'unauthorised' }, { status: 401 });
   }
 
-  const body = (await request.json()) as { id?: unknown; method?: string; params?: unknown };
+  const parsed = Envelope.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return Response.json(
+      { jsonrpc: '2.0', id: null, error: { code: INVALID_REQUEST, message: 'Invalid request' } },
+      { status: 400 },
+    );
+  }
+  const body = parsed.data;
   const { id, method } = body;
 
   // Notifications carry no id and expect no response body.
@@ -98,7 +117,7 @@ export async function POST(request: Request) {
       return reply({ tools: TOOLS });
 
     case 'tools/call': {
-      const params = body.params as { name?: string; arguments?: unknown } | undefined;
+      const params = body.params;
       if (params?.name !== 'record_decision') {
         return Response.json({
           jsonrpc: '2.0',

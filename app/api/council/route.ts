@@ -23,6 +23,17 @@ export const dynamic = 'force-dynamic';
 const API = `${env.TRUEFORGE_BASE_URL}/api/v1`;
 const MCP_NAME = 'outside-ledger';
 
+/**
+ * Sessions this process created.
+ *
+ * The approve branch forwards caller-supplied ids to the harness using our
+ * credentials, so without this any caller could release a pending write on a
+ * session it never started. Approvals are only accepted for sessions we handed
+ * out. In-memory on purpose: a restart invalidates pending approvals, which is
+ * the safe direction to fail.
+ */
+const ownedSessions = new Set<string>();
+
 const Ask = z.object({
   kind: z.literal('ask'),
   question: z.string().min(1).max(4000),
@@ -41,7 +52,7 @@ const Approve = z.object({
   sessionId: z.string().min(1),
   previousTurnId: z.string().min(1),
   threadId: z.string().min(1),
-  toolCallId: z.string().min(1),
+  toolCallIds: z.array(z.string().min(1)).min(1).max(16),
   decision: z.enum(['allow', 'deny']),
   reason: z.string().max(500).optional(),
 });
@@ -110,22 +121,26 @@ export async function POST(request: Request) {
 
   try {
     if (body.kind === 'approve') {
+      if (!ownedSessions.has(body.sessionId)) {
+        return Response.json({ error: 'unknown session' }, { status: 403 });
+      }
+
       const turn = await harness(`/sessions/${body.sessionId}/turns`, {
         method: 'POST',
         body: JSON.stringify({
           previous_turn_id: body.previousTurnId,
           stream: true,
-          input: [
-            {
-              type: 'user.tool_approval',
-              thread_id: body.threadId,
-              tool_call_id: body.toolCallId,
-              approval:
-                body.decision === 'allow'
-                  ? { status: 'allow' }
-                  : { status: 'deny', reason: body.reason ?? 'Declined by the supervisor.' },
-            },
-          ],
+          // One item per pending call — the harness parks the turn until every
+          // gated call has a decision.
+          input: body.toolCallIds.map((toolCallId) => ({
+            type: 'user.tool_approval',
+            thread_id: body.threadId,
+            tool_call_id: toolCallId,
+            approval:
+              body.decision === 'allow'
+                ? { status: 'allow' }
+                : { status: 'deny', reason: body.reason ?? 'Declined by the supervisor.' },
+          })),
         }),
       });
       return passthrough(turn, { 'x-session-id': body.sessionId });
@@ -150,6 +165,10 @@ export async function POST(request: Request) {
         body: JSON.stringify({ agent: { spec } }),
       });
       sessionId = (await session.json()).data.id as string;
+      ownedSessions.add(sessionId);
+    } else if (!ownedSessions.has(sessionId)) {
+      // A follow-up must also name a session we started.
+      return Response.json({ error: 'unknown session' }, { status: 403 });
     }
 
     const turn = await harness(`/sessions/${sessionId}/turns`, {
