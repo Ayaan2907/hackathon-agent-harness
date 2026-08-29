@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 
 /**
@@ -38,10 +39,14 @@ const schema = z.object({
    */
   APP_BASE_URL: z.url().default('http://localhost:3000'),
   /**
-   * Shared secret the harness presents to `/api/mcp`. Optional — a random one
-   * is generated per process when unset, so the app boots with no secrets.
+   * Shared secret the harness presents to `/api/mcp`. Defaults to a fresh random
+   * value per process, so the app boots with no secrets configured. Set it
+   * explicitly to keep the harness registration stable across restarts.
    */
-  LEDGER_SHARED_SECRET: z.string().min(16).optional(),
+  LEDGER_SHARED_SECRET: z
+    .string()
+    .min(16)
+    .default(() => randomBytes(32).toString('hex')),
 });
 
 const parsed = schema.safeParse(stripEmpty(process.env));
