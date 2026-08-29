@@ -13,10 +13,13 @@ export function ApprovalStrip({
   pending,
   onDecide,
 }: {
-  pending?: { toolName: string; toolCallId: string; summary: string };
+  pending?: { threadId: string; calls: { toolCallId: string; toolName: string }[] };
   onDecide: (decision: 'allow' | 'deny') => void;
 }) {
   if (!pending) return null;
+
+  const names = [...new Set(pending.calls.map((c) => c.toolName))].join(', ');
+  const count = pending.calls.length;
 
   return (
     <div
@@ -27,9 +30,12 @@ export function ApprovalStrip({
       <div>
         <p className="text-ink text-sm">
           <span className="text-wait font-mono text-xs">waiting</span>, the agent wants to run{' '}
-          <span className="font-mono">{pending.toolName}</span>
+          <span className="font-mono">{names}</span>
+          {count > 1 ? <span className="text-ink-muted"> ({count} calls)</span> : null}
         </p>
-        <p className="text-ink-muted mt-1 text-xs">{pending.summary}</p>
+        <p className="text-ink-muted mt-1 text-xs">
+          This writes to the decision ledger and cannot be undone.
+        </p>
       </div>
       <div className="flex shrink-0 gap-2">
         <button
@@ -37,14 +43,14 @@ export function ApprovalStrip({
           onClick={() => onDecide('deny')}
           className="border-line text-ink-muted hover:text-ink rounded-md border px-3 py-1.5 text-xs"
         >
-          Deny
+          Deny{count > 1 ? ' all' : ''}
         </button>
         <button
           type="button"
           onClick={() => onDecide('allow')}
           className="bg-accent rounded-md px-3 py-1.5 text-xs font-medium text-black"
         >
-          Approve
+          Approve{count > 1 ? ' all' : ''}
         </button>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { planTurn, type Selection } from './planTurn';
+import { approvalsFrom, statusFromTurnDone, type PendingApproval } from './events';
 import { parseFrames } from './sse';
 import type { Scope } from './types';
 
@@ -27,12 +28,7 @@ export interface Thread {
   done: boolean;
 }
 
-export interface Pending {
-  toolName: string;
-  toolCallId: string;
-  threadId: string;
-  summary: string;
-}
+export type Pending = PendingApproval;
 
 type Status = 'idle' | 'streaming' | 'waiting' | 'done' | 'error';
 
@@ -44,13 +40,13 @@ interface Event {
   turn_id?: string;
   title?: string;
   agent_info?: { name?: string };
-  state?: { output?: { content?: string } };
+  state?: { status?: string; output?: { content?: string } };
   tool_calls?: { id: string; function?: { name?: string } }[];
 }
 
 export function useCouncilStream() {
   const [threads, setThreads] = useState<Record<string, Thread>>({});
-  const [pending, setPending] = useState<Pending | undefined>();
+  const [pending, setPending] = useState<PendingApproval | undefined>();
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | undefined>();
 
@@ -105,22 +101,22 @@ export function useCouncilStream() {
               upsert(id, { done: true, ...(event.title ? { title: event.title } : {}) });
               break;
             case 'tool.approval_required': {
-              const call = event.tool_calls?.[0];
-              if (call) {
-                setPending({
-                  toolCallId: call.id,
-                  threadId: id,
-                  toolName: call.function?.name ?? 'record_decision',
-                  summary: 'This writes to the decision ledger and cannot be undone.',
-                });
+              // Every pending call needs a decision; keeping only the first
+              // leaves the rest stranded and the turn parked forever.
+              const approval = approvalsFrom(event);
+              if (approval) {
+                setPending(approval);
                 setStatus('waiting');
               }
               break;
             }
-            case 'turn.done':
-              // A turn that ends while an approval is outstanding is parked, not finished.
-              setStatus((s) => (s === 'waiting' ? 'waiting' : 'done'));
+            case 'turn.done': {
+              // Parked for approval is not finished, and a failed turn is not a
+              // success — read the terminal state instead of assuming.
+              const terminal = statusFromTurnDone(event);
+              setStatus((s) => (s === 'waiting' ? 'waiting' : terminal));
               break;
+            }
           }
         }
       };
@@ -196,7 +192,7 @@ export function useCouncilStream() {
         sessionId: sessionId.current,
         previousTurnId: turnId.current,
         threadId: p.threadId,
-        toolCallId: p.toolCallId,
+        toolCallIds: p.calls.map((c) => c.toolCallId),
         decision,
       });
     },
