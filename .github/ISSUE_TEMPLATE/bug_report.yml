@@ -1,0 +1,76 @@
+name: 🐛 Bug report
+description: Something behaves differently than it should.
+title: '[bug]: '
+labels: ['bug', 'triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Smaller, more specific bug reports get fixed faster.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Start the harness with `npx @truefoundry/trueforge`
+        2. Run `bun run dev`
+        3. Paste a conversation into Import
+        4. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area does this touch?
+      options:
+        - Import (pasted conversation / repo URL)
+        - Personas (persona packs, async build jobs)
+        - Council (asking, switching, comparing)
+        - Harness (TrueForge session, streaming, approvals)
+        - UI shell
+        - Repo / tooling / CI
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit SHA
+    validations:
+      required: true
+
+  - type: input
+    id: harness-version
+    attributes:
+      label: TrueForge version and how you started it
+      placeholder: 'npx @truefoundry/trueforge, listening on :8790'
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, console output, or harness events
+      render: shell
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight check
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I am running the latest `main`.
+          required: true
+        - label: My logs contain no API keys or personal data.
+          required: true

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/Ayaan2907/hackathon-agent-harness/discussions
+    about: Ask questions, share persona packs, show what your council said.
+  - name: 🔒 Security
+    url: https://github.com/Ayaan2907/hackathon-agent-harness/blob/main/SECURITY.md
+    about: Report a vulnerability privately. Do not open a public issue.
+  - name: 📖 Docs
+    url: https://github.com/Ayaan2907/hackathon-agent-harness/tree/main/docs
+    about: Architecture and agent design. Most setup questions are answered there.
