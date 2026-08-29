@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { parseFrames } from './sse';
 import type { Scope } from './types';
 
 /**
@@ -77,26 +78,12 @@ export function useCouncilStream() {
       const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
       let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += value;
-
-        // SSE frames are separated by a blank line; keep the trailing partial.
-        const frames = buffer.split('\n\n');
-        buffer = frames.pop() ?? '';
-
-        for (const frame of frames) {
-          const line = frame.split('\n').find((l) => l.startsWith('data: '));
-          if (!line) continue;
-
-          let event: Event;
-          try {
-            event = JSON.parse(line.slice(6));
-          } catch {
-            continue;
-          }
-
+      const drain = (chunk: string, flush = false) => {
+        buffer += chunk;
+        const { events, rest } = parseFrames(flush ? `${buffer}\n\n` : buffer);
+        buffer = flush ? '' : rest;
+        for (const raw of events) {
+          const event = raw as Event;
           const id = event.thread_id ?? 'main';
 
           switch (event.type) {
@@ -110,7 +97,9 @@ export function useCouncilStream() {
               if (event.content) upsert(id, { text: event.content });
               break;
             case 'thread.done':
-              upsert(id, { title: event.title ?? id, done: true });
+              // Only carry a title if this event actually has one — otherwise the
+              // name set by thread.created gets replaced with the opaque id.
+              upsert(id, { done: true, ...(event.title ? { title: event.title } : {}) });
               break;
             case 'tool.approval_required': {
               const call = event.tool_calls?.[0];
@@ -131,7 +120,15 @@ export function useCouncilStream() {
               break;
           }
         }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        drain(value);
       }
+      // The last frame may arrive without a trailing blank line.
+      if (buffer.trim()) drain('', true);
     },
     [upsert],
   );
