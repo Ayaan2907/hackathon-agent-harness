@@ -1,0 +1,26 @@
+lib/council/events.ts
+  s_bbc55387da5bfd::t_29d65e398bb2a8 1-23,25-45
+  s_bbc55387da5bfd::t_4ec9ebabe8fee3 24
+app/_components/ApprovalStrip.tsx
+  s_bbc55387da5bfd::t_4ec9ebabe8fee3 16,21-23,33-37,46,53
+lib/council/events.test.ts
+  s_bbc55387da5bfd::t_c3289c05e44f0a 1-59
+lib/council/useCouncilStream.ts
+  s_bbc55387da5bfd::t_7f4fa7c9eef1c3 5,31,43,49,104-108,113-117,119,195
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "edf7e22d048723e611edbafd6e1e5c856f24dc37",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
