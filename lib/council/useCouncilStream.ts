@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { planTurn, type Selection } from './planTurn';
 import { parseFrames } from './sse';
 import type { Scope } from './types';
 
@@ -55,6 +56,8 @@ export function useCouncilStream() {
 
   const sessionId = useRef<string | undefined>(undefined);
   const turnId = useRef<string | undefined>(undefined);
+  /** What the live session was created for, so `planTurn` can spot a change. */
+  const selection = useRef<Selection | undefined>(undefined);
 
   const upsert = useCallback((id: string, patch: Partial<Thread>) => {
     setThreads((prev) => {
@@ -153,10 +156,31 @@ export function useCouncilStream() {
 
   const ask = useCallback(
     (question: string, scope: Scope, personaIds: string[]) => {
+      const plan = planTurn({
+        current: sessionId.current
+          ? { sessionId: sessionId.current, ...selection.current! }
+          : undefined,
+        next: { scope, personaIds },
+      });
+
+      // Forking drops the session so the route builds a fresh spec; continuing
+      // keeps it, and the harness chains the turn onto the session's last one.
+      if (plan.mode === 'new') sessionId.current = undefined;
+      selection.current = { scope, personaIds };
+
+      // The display resets each turn even when the conversation continues — the
+      // agent keeps the context, the columns show only the current answer.
       setThreads({});
       setPending(undefined);
       setStatus('streaming');
-      return post({ kind: 'ask', question, scope, personaIds });
+
+      return post({
+        kind: 'ask',
+        question,
+        scope,
+        personaIds,
+        ...(plan.mode === 'continue' ? { sessionId: plan.sessionId } : {}),
+      });
     },
     [post],
   );
