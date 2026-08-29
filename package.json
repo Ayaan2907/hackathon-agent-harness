@@ -1,0 +1,48 @@
+{
+  "name": "outside",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reviewer personas grown from public data, asked as a council on a TrueForge session.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ayaan2907/hackathon-agent-harness.git"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,css,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css,yml}\""
+  },
+  "dependencies": {
+    "@truefoundry/trueforge-sdk": "^0.1.3",
+    "next": "15.5.24",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.6",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.24",
+    "prettier": "3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  },
+  "engines": {
+    "node": ">=20",
+    "bun": ">=1.1"
+  },
+  "packageManager": "bun@1.3.10"
+}
