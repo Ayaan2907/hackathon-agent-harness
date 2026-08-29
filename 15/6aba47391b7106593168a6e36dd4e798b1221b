@@ -1,0 +1,19 @@
+README.md
+  s_bbc55387da5bfd::t_e4af06ca24f3ed 75-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "156aba47391b7106593168a6e36dd4e798b1221b",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
