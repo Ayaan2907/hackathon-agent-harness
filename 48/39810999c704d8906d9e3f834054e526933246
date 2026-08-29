@@ -1,0 +1,27 @@
+lib/council/writeBudget.test.ts
+  s_bbc55387da5bfd::t_2b80ec2fb9065f 1-59
+lib/config/env.ts
+  s_bbc55387da5bfd::t_dcf63903d93679 30-44,61
+app/api/mcp/route.ts
+  s_bbc55387da5bfd::t_86a303b68946d9 5,62-68
+  s_bbc55387da5bfd::t_6dd1f5697a707d 69-70
+lib/council/writeBudget.ts
+  s_bbc55387da5bfd::t_dcf63903d93679 18-25,29,34-36,41,46
+  s_bbc55387da5bfd::t_5bef13d9caf8d9 1-17,26-28,30-33,37-40,42-45,47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4839810999c704d8906d9e3f834054e526933246",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
