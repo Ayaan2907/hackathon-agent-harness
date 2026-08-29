@@ -5,23 +5,39 @@ import { ApprovalStrip } from './_components/ApprovalStrip';
 import { JobsRail } from './_components/JobsRail';
 import { PersonaChip } from './_components/PersonaChip';
 import { ScopeToggle } from './_components/ScopeToggle';
+import { useCouncilStream } from '@/lib/council/useCouncilStream';
 import type { Job, Persona, Scope } from '@/lib/council/types';
 
 /**
  * The console shell: what the agent is doing, what it is waiting on, what it did.
  *
- * This renders the full chrome against local state. The seams where the
- * TrueForge session attaches are marked TODO and described in
- * docs/ARCHITECTURE.md.
+ * Every voice arrives on one stream and is grouped by `thread_id`, so the
+ * columns below are subagent threads, not separate sessions.
  */
+
+const STATUS_LABEL: Record<string, string> = {
+  idle: 'idle',
+  streaming: 'working',
+  waiting: 'waiting on you',
+  done: 'done',
+  error: 'error',
+};
+
 export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: Job[] }) {
   const [scope, setScope] = useState<Scope>('repo');
   const [selected, setSelected] = useState<string[]>(personas.map((p) => p.id));
   const [question, setQuestion] = useState('');
+  const { threads, pending, status, error, ask, decide } = useCouncilStream();
+
+  const busy = status === 'streaming' || status === 'waiting';
 
   function togglePersona(id: string) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
+
+  // The root thread narrates delegation; the persona answers are the subagents.
+  const voices = threads.filter((t) => t.id !== 'main');
+  const root = threads.find((t) => t.id === 'main');
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -29,6 +45,19 @@ export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: J
         <div className="flex items-baseline gap-3">
           <span className="text-[15px] font-semibold tracking-tight">Outside</span>
           <span className="text-ink-faint font-mono text-xs">council</span>
+          <span
+            className={`font-mono text-xs ${
+              status === 'waiting'
+                ? 'text-wait'
+                : status === 'error'
+                  ? 'text-stop'
+                  : status === 'done'
+                    ? 'text-ok'
+                    : 'text-ink-faint'
+            }`}
+          >
+            {STATUS_LABEL[status]}
+          </span>
         </div>
         <ScopeToggle value={scope} onChange={setScope} />
       </header>
@@ -63,28 +92,62 @@ export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: J
             />
 
             <div className="mt-3 flex items-center gap-3">
-              {/* TODO(#2): POST /api/v1/sessions/{id}/turns via lib/harness. */}
               <button
                 type="button"
-                disabled={!question.trim() || selected.length === 0}
+                onClick={() => ask(question, scope, selected)}
+                disabled={!question.trim() || selected.length === 0 || busy}
                 className="bg-accent rounded-md px-3 py-1.5 text-sm font-medium text-black disabled:cursor-not-allowed disabled:opacity-30"
               >
                 Ask {selected.length || 'no'} {selected.length === 1 ? 'voice' : 'voices'}
               </button>
               <span className="text-ink-faint font-mono text-xs">
-                {scope === 'repo' ? 'file tools on' : 'file tools off'}
+                {scope === 'repo' ? 'sandbox + ledger on' : 'no sandbox, no write tools'}
               </span>
             </div>
+
+            {error ? <p className="text-stop mt-3 font-mono text-xs">{error}</p> : null}
           </section>
 
           <section className="flex-1">
             <h2 className="text-ink-muted mb-3 font-mono text-xs tracking-wide uppercase">
               Stream
             </h2>
-            {/* TODO(#3): render TurnStreamingEvent items from subscribeToTurn. */}
-            <p className="text-ink-faint text-sm">
-              Nothing yet. Turn events land here as the council answers.
-            </p>
+
+            {threads.length === 0 ? (
+              <p className="text-ink-faint text-sm">
+                Nothing yet. Turn events land here as the council answers.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {root && root.text ? (
+                  <details className="border-line bg-raised rounded-md border px-4 py-3">
+                    <summary className="text-ink-muted cursor-pointer font-mono text-xs">
+                      root thread — delegation
+                    </summary>
+                    <p className="text-ink-muted mt-2 text-xs whitespace-pre-wrap">{root.text}</p>
+                  </details>
+                ) : null}
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {voices.map((t) => (
+                    <article
+                      key={t.id}
+                      className="border-line bg-raised flex flex-col rounded-md border px-4 py-3"
+                    >
+                      <header className="mb-2 flex items-center justify-between">
+                        <span className="font-mono text-xs">{t.title}</span>
+                        <span
+                          className={`font-mono text-[10px] ${t.done ? 'text-ok' : 'text-wait'}`}
+                        >
+                          {t.done ? 'done' : 'thinking'}
+                        </span>
+                      </header>
+                      <p className="text-ink text-sm whitespace-pre-wrap">{t.text}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         </main>
 
@@ -93,8 +156,7 @@ export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: J
         </aside>
       </div>
 
-      {/* TODO(#4): show when a tool.approval_required event arrives. */}
-      <ApprovalStrip />
+      <ApprovalStrip pending={pending} onDecide={decide} />
     </div>
   );
 }
