@@ -1,0 +1,19 @@
+README.md
+  s_bbc55387da5bfd::t_e7b574e053705d 3,5-7,9-10,14,16-19,21-23,25,27,29-34,36,38,40-47,49-53,55-61,64,67-68,70-72,75-77,79,81-87,89,91-93,95,97-102,106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "e446bd2b0fd65aec59f82c0e8a9a7307c0570258",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
