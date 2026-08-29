@@ -11,8 +11,10 @@
  */
 export function ApprovalStrip({
   pending,
+  onDecide,
 }: {
   pending?: { toolName: string; toolCallId: string; summary: string };
+  onDecide: (decision: 'allow' | 'deny') => void;
 }) {
   if (!pending) return null;
 
@@ -30,15 +32,16 @@ export function ApprovalStrip({
         <p className="text-ink-muted mt-1 text-xs">{pending.summary}</p>
       </div>
       <div className="flex shrink-0 gap-2">
-        {/* TODO(#4): send user.tool_approval with status allow / deny. */}
         <button
           type="button"
+          onClick={() => onDecide('deny')}
           className="border-line text-ink-muted hover:text-ink rounded-md border px-3 py-1.5 text-xs"
         >
           Deny
         </button>
         <button
           type="button"
+          onClick={() => onDecide('allow')}
           className="bg-accent rounded-md px-3 py-1.5 text-xs font-medium text-black"
         >
           Approve
