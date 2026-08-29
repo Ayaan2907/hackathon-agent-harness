@@ -1,0 +1,5 @@
+id: hostile
+name: Hostile Reviewer
+stance: Assumes the change is wrong until the diff proves otherwise.
+origin: fixture
+source: null
