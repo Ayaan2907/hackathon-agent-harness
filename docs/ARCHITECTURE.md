@@ -150,6 +150,11 @@ A pending approval is detected from `turn.done` carrying a non-empty
 `@write`, `@destructive`) are a different tag set from the enable/disable
 selectors (`@all`, `@read-only`).
 
+Registering and updating take different bodies, which is easy to trip over.
+`POST /api/v1/agents` wants `{ name, manifest }`. `PUT /api/v1/agents/{id}`
+wants `{ manifest }` alone and rejects `name` as an unrecognized key. The `{id}`
+is the generated agent id, not the name.
+
 Agent specs are stored in SQLite at
 `~/Library/Application Support/trueforge/db/db.sqlite`, not in a project
 directory. There is no `.trueforge/` folder.
