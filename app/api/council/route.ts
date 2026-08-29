@@ -27,6 +27,12 @@ const Ask = z.object({
   question: z.string().min(1).max(4000),
   scope: z.enum(['repo', 'plan']),
   personaIds: z.array(z.string().min(1).max(64)).min(1).max(4),
+  /**
+   * Continue an existing conversation. The client decides this via `planTurn`,
+   * which forks instead whenever the scope or the council changed — a session
+   * is bound to its agent spec at creation and cannot be re-scoped.
+   */
+  sessionId: z.string().min(1).optional(),
 });
 
 const Approve = z.object({
@@ -126,17 +132,21 @@ export async function POST(request: Request) {
     const mcpUrl = new URL('/api/mcp', request.url).toString();
     if (body.scope === 'repo') await ensureLedgerRegistered(mcpUrl);
 
-    const spec = await buildCouncilSpec({
-      scope: body.scope,
-      personaIds: body.personaIds,
-      mcpUrl,
-    });
-
-    const session = await harness('/sessions', {
-      method: 'POST',
-      body: JSON.stringify({ agent: { spec } }),
-    });
-    const sessionId = (await session.json()).data.id as string;
+    // A follow-up reuses the session, so the agent keeps the conversation. The
+    // spec is only built when a new one is needed.
+    let sessionId = body.sessionId;
+    if (!sessionId) {
+      const spec = await buildCouncilSpec({
+        scope: body.scope,
+        personaIds: body.personaIds,
+        mcpUrl,
+      });
+      const session = await harness('/sessions', {
+        method: 'POST',
+        body: JSON.stringify({ agent: { spec } }),
+      });
+      sessionId = (await session.json()).data.id as string;
+    }
 
     const turn = await harness(`/sessions/${sessionId}/turns`, {
       method: 'POST',
