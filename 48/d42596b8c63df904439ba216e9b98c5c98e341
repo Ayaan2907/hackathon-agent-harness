@@ -1,0 +1,23 @@
+lib/council/useCouncilStream.ts
+  s_bbc55387da5bfd::t_6c188761b6c931 5,84-89,103-105,126-131,133-134
+lib/council/sse.test.ts
+  s_bbc55387da5bfd::t_29ff06b8ac3f45 1-67
+lib/council/sse.ts
+  s_bbc55387da5bfd::t_eb6067126fc111 1-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "48d42596b8c63df904439ba216e9b98c5c98e341",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
