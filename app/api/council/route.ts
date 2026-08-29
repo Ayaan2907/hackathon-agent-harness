@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { env } from '@/lib/config/env';
 import { buildCouncilSpec } from '@/lib/council/spec';
 import { LEDGER_AUTH_HEADER, LEDGER_SECRET } from '@/lib/council/ledgerAuth';
+import { grantWrite } from '@/lib/council/writeBudget';
 
 /**
  * Proxies one council ask — and any approval resume — between the browser and
@@ -26,13 +27,19 @@ const MCP_NAME = 'outside-ledger';
 /**
  * Sessions this process created.
  *
+ * Held on `globalThis`: Next re-evaluates route modules in development, and a
+ * module-level Set is emptied when it does — which would 403 the user's own
+ * approval seconds after their ask succeeded.
+ *
  * The approve branch forwards caller-supplied ids to the harness using our
  * credentials, so without this any caller could release a pending write on a
  * session it never started. Approvals are only accepted for sessions we handed
  * out. In-memory on purpose: a restart invalidates pending approvals, which is
  * the safe direction to fail.
  */
-const ownedSessions = new Set<string>();
+const sessionStore = globalThis as typeof globalThis & { __outsideSessions?: Set<string> };
+sessionStore.__outsideSessions ??= new Set<string>();
+const ownedSessions = sessionStore.__outsideSessions;
 
 const Ask = z.object({
   kind: z.literal('ask'),
@@ -51,8 +58,10 @@ const Approve = z.object({
   kind: z.literal('approve'),
   sessionId: z.string().min(1),
   previousTurnId: z.string().min(1),
-  threadId: z.string().min(1),
-  toolCallIds: z.array(z.string().min(1)).min(1).max(16),
+  calls: z
+    .array(z.object({ threadId: z.string().min(1), toolCallId: z.string().min(1) }))
+    .min(1)
+    .max(16),
   decision: z.enum(['allow', 'deny']),
   reason: z.string().max(500).optional(),
 });
@@ -125,6 +134,9 @@ export async function POST(request: Request) {
         return Response.json({ error: 'unknown session' }, { status: 403 });
       }
 
+      // A ledger write must be paid for by an approval a human actually gave.
+      if (body.decision === 'allow') body.calls.forEach(() => grantWrite());
+
       const turn = await harness(`/sessions/${body.sessionId}/turns`, {
         method: 'POST',
         body: JSON.stringify({
@@ -132,9 +144,9 @@ export async function POST(request: Request) {
           stream: true,
           // One item per pending call — the harness parks the turn until every
           // gated call has a decision.
-          input: body.toolCallIds.map((toolCallId) => ({
+          input: body.calls.map(({ threadId, toolCallId }) => ({
             type: 'user.tool_approval',
-            thread_id: body.threadId,
+            thread_id: threadId,
             tool_call_id: toolCallId,
             approval:
               body.decision === 'allow'

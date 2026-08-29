@@ -13,13 +13,13 @@ export function ApprovalStrip({
   pending,
   onDecide,
 }: {
-  pending?: { threadId: string; calls: { toolCallId: string; toolName: string }[] };
+  pending: { threadId: string; toolCallId: string; toolName: string }[];
   onDecide: (decision: 'allow' | 'deny') => void;
 }) {
-  if (!pending) return null;
+  if (pending.length === 0) return null;
 
-  const names = [...new Set(pending.calls.map((c) => c.toolName))].join(', ');
-  const count = pending.calls.length;
+  const names = [...new Set(pending.map((c) => c.toolName))].join(', ');
+  const count = pending.length;
 
   return (
     <div

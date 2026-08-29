@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { planTurn, type Selection } from './planTurn';
-import { approvalsFrom, statusFromTurnDone, type PendingApproval } from './events';
+import { mergeApprovals, statusFromTurnDone, type PendingCall } from './events';
 import { parseFrames } from './sse';
 import type { Scope } from './types';
 
@@ -28,7 +28,7 @@ export interface Thread {
   done: boolean;
 }
 
-export type Pending = PendingApproval;
+export type Pending = PendingCall[];
 
 type Status = 'idle' | 'streaming' | 'waiting' | 'done' | 'error';
 
@@ -46,7 +46,7 @@ interface Event {
 
 export function useCouncilStream() {
   const [threads, setThreads] = useState<Record<string, Thread>>({});
-  const [pending, setPending] = useState<PendingApproval | undefined>();
+  const [pending, setPending] = useState<PendingCall[]>([]);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | undefined>();
 
@@ -101,13 +101,11 @@ export function useCouncilStream() {
               upsert(id, { done: true, ...(event.title ? { title: event.title } : {}) });
               break;
             case 'tool.approval_required': {
-              // Every pending call needs a decision; keeping only the first
-              // leaves the rest stranded and the turn parked forever.
-              const approval = approvalsFrom(event);
-              if (approval) {
-                setPending(approval);
-                setStatus('waiting');
-              }
+              // A turn can park more than once, and the harness rejects a
+              // resume that misses any outstanding call — so accumulate rather
+              // than replace.
+              setPending((prev) => mergeApprovals(prev, event));
+              setStatus('waiting');
               break;
             }
             case 'turn.done': {
@@ -167,7 +165,7 @@ export function useCouncilStream() {
       // The display resets each turn even when the conversation continues — the
       // agent keeps the context, the columns show only the current answer.
       setThreads({});
-      setPending(undefined);
+      setPending([]);
       setStatus('streaming');
 
       return post({
@@ -183,16 +181,17 @@ export function useCouncilStream() {
 
   const decide = useCallback(
     (decision: 'allow' | 'deny') => {
-      if (!pending || !sessionId.current || !turnId.current) return;
-      const p = pending;
-      setPending(undefined);
+      if (pending.length === 0 || !sessionId.current || !turnId.current) return;
+      const calls = pending;
+      setPending([]);
       setStatus('streaming');
+      // Every parked call, across every subagent thread — the harness rejects
+      // a resume that leaves any of them unanswered.
       return post({
         kind: 'approve',
         sessionId: sessionId.current,
         previousTurnId: turnId.current,
-        threadId: p.threadId,
-        toolCallIds: p.calls.map((c) => c.toolCallId),
+        calls: calls.map(({ threadId, toolCallId }) => ({ threadId, toolCallId })),
         decision,
       });
     },
