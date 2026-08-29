@@ -1,0 +1,19 @@
+docs/CANVAS-PLAN.md
+  s_bbc55387da5bfd::t_dc546f06e1f113 1-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "e7f25c74f0d4894e5789ea1b58b18d15672d01ed",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
