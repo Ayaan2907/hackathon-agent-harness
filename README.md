@@ -72,9 +72,10 @@ bun install
 bun run dev                          # app on :3000
 ```
 
-The app registers its own MCP server with the harness on the first repo-scope ask.
-`.env.example` documents the two variables; both have working defaults, and the app
-boots and renders with the file entirely unset.
+The app registers its own MCP server with the harness on the first repo-scope ask,
+including the shared secret that endpoint requires. `.env.example` documents every
+variable; all have working defaults, and the app boots and renders with the file
+entirely unset.
 
 ## Repo layout
 
