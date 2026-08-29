@@ -2,6 +2,7 @@ import { appendFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { z } from 'zod';
 import { LEDGER_AUTH_HEADER, isAuthorised } from '@/lib/council/ledgerAuth';
+import { consumeWrite } from '@/lib/council/writeBudget';
 
 /**
  * A minimal MCP server, served by this app and attached to the council agent.
@@ -56,6 +57,15 @@ async function recordDecision(args: unknown) {
   const parsed = RecordDecision.safeParse(args);
   if (!parsed.success) {
     return { isError: true, content: [{ type: 'text', text: z.prettifyError(parsed.error) }] };
+  }
+
+  // The secret proves the caller is the harness; it does not prove the approval
+  // gate ran. Every write spends an approval a human granted.
+  if (!consumeWrite()) {
+    return {
+      isError: true,
+      content: [{ type: 'text', text: 'Refused: no approved write is outstanding.' }],
+    };
   }
 
   const entry = { ...parsed.data, recorded_at: new Date().toISOString() };
