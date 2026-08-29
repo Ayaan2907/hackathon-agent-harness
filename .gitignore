@@ -1,0 +1,12 @@
+node_modules/
+.next/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.trueforge/
+*.sqlite
+.venv/
+__pycache__/
