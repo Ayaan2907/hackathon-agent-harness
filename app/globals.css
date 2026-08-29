@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/* Single source of truth for the palette. Dark-only by intent: the console is a
+   control room, not a marketing page. */
+@theme {
+  --color-base: #0b0c0e;
+  --color-raised: #141619;
+  --color-line: #23262b;
+  --color-line-strong: #33373e;
+
+  --color-ink: #e8eaed;
+  --color-ink-muted: #9aa0a8;
+  --color-ink-faint: #6b7280;
+
+  --color-accent: #d7d3c8;
+  --color-ok: #6ea87a;
+  --color-wait: #c9a227;
+  --color-stop: #c05f4f;
+
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}

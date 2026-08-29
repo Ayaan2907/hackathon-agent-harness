@@ -1,0 +1,55 @@
+name: ✨ Feature request
+description: Suggest something the council should be able to do.
+title: '[feat]: '
+labels: ['enhancement', 'triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We frame features as **user moments**, not implementations. Tell us when
+        this would help and why. The engineering layer is downstream.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area does this touch?
+      options:
+        - Import (pasted conversation / repo URL)
+        - Personas (persona packs, async build jobs)
+        - Council (asking, switching, comparing)
+        - Harness (TrueForge session, streaming, approvals)
+        - UI shell
+        - Repo / tooling / CI
+    validations:
+      required: true
+
+  - type: textarea
+    id: moment
+    attributes:
+      label: User moment
+      placeholder: |
+        "When I'm three days into a refactor and I've lost the thread, I want to ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What would you build? Rough is fine.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else would solve this moment, and why is it worse?
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight check
+      options:
+        - label: I searched existing issues and discussions for this idea.
+          required: true

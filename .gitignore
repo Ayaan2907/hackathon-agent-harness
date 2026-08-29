@@ -1,12 +1,47 @@
+# dependencies
 node_modules/
+
+# build output
 .next/
+out/
 dist/
+build/
+
+# env
 .env
-.env.*
+.env*.local
 !.env.example
-.DS_Store
+
+# logs
 *.log
+npm-debug.log*
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# coverage
+coverage/
+
+# harness runtime state
 .trueforge/
-*.sqlite
+
+# python (persona packing scripts, if any)
 .venv/
 __pycache__/
+
+# databases
+*.sqlite
+*.db
+
+# per-developer agent dirs
+.claude/settings.local.json
+.claude/worktrees/
+.gstack/

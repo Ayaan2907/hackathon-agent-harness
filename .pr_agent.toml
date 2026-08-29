@@ -1,0 +1,32 @@
+# Qodo review configuration.
+# Docs: https://docs.qodo.ai/install-and-configure/configuration-overview/configuration-file
+#
+# This file only takes effect for pull requests opened AFTER it lands on the
+# default branch. Merge it before opening the PRs you want reviewed.
+
+[github_app]
+# Run automatically on every PR, no comment needed.
+pr_commands = [
+  "/agentic_describe",
+  "/agentic_review",
+]
+
+[review_agent]
+# Findings appear both inline on the diff and in the summary comment.
+comments_location_policy = "both"
+
+# Inline-comment noise floor: 3 = High only, 2 = High + Medium, 1 = everything.
+# The summary always lists every finding regardless of this setting.
+# https://docs.qodo.ai/code-review/severity-thresholds
+inline_comments_severity_threshold = 2
+
+# What this repo wants scrutinised beyond the defaults. The app drives an agent
+# harness that executes tools and touches a sandbox, so the risk is concentrated
+# at those boundaries rather than in ordinary UI code.
+issues_user_guidelines = """
+Flag any write or destructive agent tool that is reachable without passing through
+the TrueForge approval gate. Flag scraped or model-generated content that reaches
+the DOM, a shell, or the filesystem without validation at the boundary. Flag any
+direct process.env read outside lib/config/env.ts. Flag credentials, tokens, or
+personal data in code, fixtures, logs, or error messages.
+"""
