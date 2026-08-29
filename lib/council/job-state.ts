@@ -11,12 +11,12 @@ const LABELS: Record<JobState, string> = {
 /**
  * One line of status for the jobs rail.
  *
- * A failed job explains itself, because the recovery path — carry on with the
- * fixture personas — is only obvious if the user knows what broke.
+ * A failed job explains itself, because the recovery path, carrying on with the
+ * fixture personas, is only obvious if the user knows what broke.
  */
 export function jobStateLabel(job: Job): string {
   if (job.state === 'failed') {
-    return job.error ? `failed — ${job.error}` : 'failed — using fixture personas';
+    return job.error ? `failed: ${job.error}` : 'failed, using fixture personas';
   }
   return LABELS[job.state];
 }

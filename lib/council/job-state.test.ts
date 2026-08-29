@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isTerminal, jobStateLabel } from './jobState';
+import { isTerminal, jobStateLabel } from './job-state';
 import type { Job } from './types';
 
 function job(overrides: Partial<Job>): Job {
@@ -16,12 +16,12 @@ describe('jobStateLabel', () => {
 
   it('surfaces the error on a failed job', () => {
     expect(jobStateLabel(job({ state: 'failed', error: 'source returned 403' }))).toBe(
-      'failed — source returned 403',
+      'failed: source returned 403',
     );
   });
 
   it('names the fallback when a failed job has no error', () => {
-    expect(jobStateLabel(job({ state: 'failed' }))).toBe('failed — using fixture personas');
+    expect(jobStateLabel(job({ state: 'failed' }))).toBe('failed, using fixture personas');
   });
 });
 

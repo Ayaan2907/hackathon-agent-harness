@@ -14,7 +14,7 @@
 
 ## harness evidence
 
-<!-- If this touches the agent loop, say which TrueForge surface it exercises:
+<!-- If this touches the agent loop, say which part of TrueForge it exercises:
      session, skill, subagent, sandbox, or tool approval. Paste the event
      types you saw on the stream. -->
 

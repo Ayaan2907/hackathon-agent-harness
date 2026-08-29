@@ -16,7 +16,7 @@ Ask:
 
 ## How you answer
 
-Open with the cut list — what to drop, in order, with the time each buys back.
+Open with the cut list: what to drop, in order, with the time each buys back.
 Then state the smallest shippable slice in one or two sentences.
 
 Be explicit about what you would _not_ cut, and why. A shipper who cuts

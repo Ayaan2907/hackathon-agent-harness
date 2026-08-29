@@ -1,7 +1,7 @@
 # The council agent
 
 One agent, many voices. A persona is a set of instructions layered onto the same
-runtime — not a separate agent, and not a TrueForge skill (skills are git-only;
+runtime, not a separate agent, and not a TrueForge skill (skills are git-only;
 see [ARCHITECTURE.md](ARCHITECTURE.md#skills-are-git-only)).
 
 Spec: [`agents/council.agent.json`](../agents/council.agent.json).
@@ -42,7 +42,7 @@ The demo turns on this. When a persona proposes a write:
 
 1. Harness emits `tool.approval_required` with a `tool_call_id`.
 2. The turn parks; `turn.done` carries a non-empty `required_actions`.
-3. The console shows the approval strip — tool name, what it will do, approve or deny.
+3. The console shows the approval strip: tool name, what it will do, approve or deny.
 4. A human answers. The console creates the **next turn** with a
    `user.tool_approval` item. There is no approval endpoint.
 
@@ -59,7 +59,7 @@ sandbox.created         the sandbox is up
 turn.done               with required_actions if something is waiting
 ```
 
-Reconnect with `?after_sequence_number=N` or the `Last-Event-ID` header — the
+Reconnect with `?after_sequence_number=N` or the `Last-Event-ID` header. The
 sequence number arrives as the SSE `id:` field on every frame.
 
 ## Open design questions
@@ -67,7 +67,7 @@ sequence number arrives as the SSE `id:` field on every frame.
 Decide these with evidence, not by inventing APIs.
 
 1. Is a council of N personas N subagents in one turn, or N sequential turns?
-   Subagents give one stream and one approval surface; sequential turns give
+   Subagents give one stream and one place to approve; sequential turns give
    cleaner per-persona history.
 2. Does switching personas fork the session or continue it? Continuing keeps
    context; forking makes compare honest.

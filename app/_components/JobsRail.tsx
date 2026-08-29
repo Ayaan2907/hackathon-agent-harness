@@ -1,10 +1,10 @@
 'use client';
 
-import { jobStateLabel } from '@/lib/council/jobState';
+import { jobStateLabel } from '@/lib/council/job-state';
 import type { Job } from '@/lib/council/types';
 
 /**
- * Quiet rail for async persona builds. It never blocks the council — a job that
+ * Quiet rail for async persona builds. It never blocks the council. A job that
  * fails leaves the fixture personas in place.
  */
 export function JobsRail({ jobs }: { jobs: Job[] }) {

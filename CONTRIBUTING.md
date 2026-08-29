@@ -20,16 +20,16 @@ git clone https://github.com/Ayaan2907/hackathon-agent-harness.git
 cd hackathon-agent-harness
 bun install
 
-# terminal 1 — the agent runtime
+# terminal 1, the agent runtime
 npx @truefoundry/trueforge
 
-# terminal 2 — the console
+# terminal 2, the console
 cp .env.example .env.local   # optional, defaults already work
 bun run dev
 ```
 
 The app boots with zero secrets. Model, scraping, and sandbox credentials live
-inside TrueForge, not here — configure them once in the TrueForge console and
+inside TrueForge, not here. Configure them once in the TrueForge console and
 this app picks them up through the harness.
 
 ## branch + commit conventions
@@ -62,7 +62,7 @@ The template covers it, but the load-bearing items:
 
 - `bun run typecheck && bun run lint && bun run test && bun run build` all pass.
 - Screenshots or a clip for any visual change.
-- If you touched the agent loop, say which TrueForge surface it exercises and
+- If you touched the agent loop, say which part of TrueForge it exercises and
   paste the event types you observed.
 - Qodo reviewed the PR, and every High-severity finding is either fixed or
   dismissed **in the Qodo thread with a stated reason**.
@@ -70,15 +70,15 @@ The template covers it, but the load-bearing items:
 ## code review
 
 Qodo reviews every substantive PR automatically once it is installed on the
-repo. A human still merges. Qodo findings are advice, not a gate — but a
+repo. A human still merges. Qodo findings are advice, not a gate. But a
 dismissed High finding needs a written reason, in-thread, that someone else
 could disagree with.
 
 Review comments use severity prefixes. Anything without a prefix is blocking.
 
-- `Nit:` — polish, take it or leave it
-- `Optional:` — a suggestion worth considering
-- `FYI:` — context, no action needed
+- `Nit:` polish, take it or leave it
+- `Optional:` a suggestion worth considering
+- `FYI:` context, no action needed
 
 ## repo layout
 
@@ -88,7 +88,7 @@ app/            Next.js App Router. page.tsx (server) + XClient.tsx (client).
 lib/            Domain logic, one exported function per file, grouped by noun.
                 lib/config/env.ts is the only place process.env is read.
 agents/         TrueForge agent definitions and instructions.
-profiles/       Persona packs — SKILL.md + profile.yaml per reviewer.
+profiles/       Persona packs. SKILL.md + profile.yaml per reviewer.
 docs/           Architecture and agent design.
 ```
 
@@ -120,5 +120,5 @@ License, same as the rest of the project.
 
 ---
 
-If anything in this doc is wrong, outdated, or unclear — open a PR. The first
+If anything in this doc is wrong, outdated, or unclear, open a PR. The first
 contribution is usually the docs fix you were tempted to leave alone.

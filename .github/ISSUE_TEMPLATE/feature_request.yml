@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         We frame features as **user moments**, not implementations. Tell us when
-        this would help and why — the engineering layer is downstream.
+        this would help and why. The engineering layer is downstream.
 
   - type: dropdown
     id: area

@@ -2,7 +2,7 @@ import { TrueForge } from '@truefoundry/trueforge-sdk';
 import { env } from '@/lib/config/env';
 
 /**
- * The TrueForge harness client. Server-side only — it holds the token and
+ * The TrueForge harness client. Server-side only. It holds the token and
  * talks to the harness directly.
  *
  * Local TrueForge runs with authentication off: when no OIDC issuer is

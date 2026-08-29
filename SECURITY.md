@@ -46,7 +46,7 @@ you would rather not be named.
 | `0.1.x` | ✅        |
 | `< 0.1` | ❌        |
 
-## The risk surface we actually care about
+## The risks we actually care about
 
 This project runs an agent that reads public web content and executes tools.
 That shape has three sharp edges, and a report touching any of them is a P0:
@@ -65,4 +65,4 @@ client bundles, or the event stream.
 
 ## Hall of fame
 
-None yet — be the first.
+None yet. Be the first.

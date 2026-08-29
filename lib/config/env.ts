@@ -38,7 +38,7 @@ const parsed = schema.safeParse(stripEmpty(process.env));
 if (!parsed.success) {
   throw new Error(
     `[env] invalid environment variables:\n${z.prettifyError(parsed.error)}\n\n` +
-      'Fill .env.local — see .env.example.',
+      'Fill .env.local. See .env.example.',
   );
 }
 

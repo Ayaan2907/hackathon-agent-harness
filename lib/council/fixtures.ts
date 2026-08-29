@@ -1,7 +1,7 @@
 import type { Job, Persona } from './types';
 
 /**
- * Personas that ship with the repo so the council is never empty — including
+ * Personas that ship with the repo so the council is never empty, including
  * when a persona build job fails. Real packs live in `profiles/<id>/`.
  */
 export const FIXTURE_PERSONAS: Persona[] = [

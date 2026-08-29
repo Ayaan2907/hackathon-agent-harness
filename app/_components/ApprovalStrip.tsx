@@ -24,13 +24,13 @@ export function ApprovalStrip({
     >
       <div>
         <p className="text-ink text-sm">
-          <span className="text-wait font-mono text-xs">waiting</span> — the agent wants to run{' '}
+          <span className="text-wait font-mono text-xs">waiting</span>, the agent wants to run{' '}
           <span className="font-mono">{pending.toolName}</span>
         </p>
         <p className="text-ink-muted mt-1 text-xs">{pending.summary}</p>
       </div>
       <div className="flex shrink-0 gap-2">
-        {/* TODO(harness): send user.tool_approval with status allow / deny. */}
+        {/* TODO(#4): send user.tool_approval with status allow / deny. */}
         <button
           type="button"
           className="border-line text-ink-muted hover:text-ink rounded-md border px-3 py-1.5 text-xs"

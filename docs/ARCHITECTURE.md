@@ -19,7 +19,7 @@ Three processes, one of which we wrote.
 
 The console holds no provider credentials. Bright Data, Daytona, and the model
 provider are configured _inside_ TrueForge; the console only knows
-`TRUEFORGE_BASE_URL`. That is a deliberate boundary — the blast radius of this
+`TRUEFORGE_BASE_URL`. That is a deliberate boundary. The blast radius of this
 repo leaking is a URL.
 
 ## 2. Code layout
@@ -35,12 +35,12 @@ repo leaking is a URL.
 
 No barrel files. Import the exact module.
 
-## 3. Verified TrueForge API surface
+## 3. The verified TrueForge API
 
 Everything in this section was checked against `@truefoundry/trueforge@0.1.4`
 running locally on 2026-08-29, either by reading the shipped sources or by
 calling the live server. **Three claims in the original handoff brief turned out
-to be wrong — they are corrected below.**
+to be wrong, and they are corrected below.**
 
 ### Base path
 
@@ -70,13 +70,13 @@ scheme; when OIDC _is_ configured, the credential is an OIDC ID token.
 
 ### The turn loop
 
-| Step                | Call                                                                            |
-| ------------------- | ------------------------------------------------------------------------------- |
-| Create a session    | `POST /api/v1/sessions` — body `{ agent: { name } }` or `{ agent: { spec } }`   |
-| Start a turn        | `POST /api/v1/sessions/{id}/turns` — body `{ input, previous_turn_id, stream }` |
-| Resume a stream     | `GET /api/v1/sessions/{id}/turns/{turn_id}/subscribe?after_sequence_number=N`   |
-| Read history        | `GET /api/v1/sessions/{id}/events`                                              |
-| Pull a sandbox file | `GET /api/v1/sessions/{id}/turns/{turn_id}/download-sandbox-file?path=`         |
+| Step                | Call                                                                           |
+| ------------------- | ------------------------------------------------------------------------------ |
+| Create a session    | `POST /api/v1/sessions`, body `{ agent: { name } }` or `{ agent: { spec } }`   |
+| Start a turn        | `POST /api/v1/sessions/{id}/turns`, body `{ input, previous_turn_id, stream }` |
+| Resume a stream     | `GET /api/v1/sessions/{id}/turns/{turn_id}/subscribe?after_sequence_number=N`  |
+| Read history        | `GET /api/v1/sessions/{id}/events`                                             |
+| Pull a sandbox file | `GET /api/v1/sessions/{id}/turns/{turn_id}/download-sandbox-file?path=`        |
 
 `stream` defaults to **true** and returns `text/event-stream`. Each SSE frame
 carries the event JSON in `data:` and its sequence number in `id:`, so
@@ -99,7 +99,7 @@ sandbox.created
 Subagents surface as `thread.created` / `thread.done`. Terminal turn statuses
 are `running | done | cancelled | error`.
 
-### Approvals — there is no approval endpoint
+### Approvals: there is no approval endpoint
 
 **Correction to the handoff brief.** Approving a gated tool is not a dedicated
 call. You create the _next turn_ with an approval input item:
@@ -162,8 +162,8 @@ HTTPS GitHub or GitLab URL. `git` is the _only_ skill type. At turn time the
 harness sparse-clones the repo **inside the sandbox** and tells the agent to
 read `SKILL.md` itself.
 
-So the handoff's open question — "how do you register a generated skill at
-runtime without a marketplace?" — has a blunt answer: **you cannot.** A
+The handoff asked how you register a generated skill at runtime without a
+marketplace. The answer is blunt: **you cannot.** A
 `SKILL.md` generated on the fly cannot become a TrueForge skill unless it is
 first pushed to a public git URL.
 
@@ -180,7 +180,7 @@ a 2xx.
 
 Verified present, with all credential values left unread:
 
-- **Model provider** `openai` — `gpt-5.4-mini`, `gpt-5.5`, `gpt-5.6-luna`,
+- **Model provider** `openai`, serving `gpt-5.4-mini`, `gpt-5.5`, `gpt-5.6-luna`,
   `gpt-5.6-sol`, `gpt-5.6-terra`.
 - **MCP server** `bright-data` → `https://mcp.brightdata.com/mcp`, authenticated.
 - **Sandbox provider** `daytona`, status `ready`.
@@ -201,7 +201,7 @@ marked `TODO(harness)` in source:
 ## 5. Why these choices
 
 **Single Next.js app, not a monorepo.** There is one deploy target. Turborepo
-plus workspaces buys nothing here and costs a config surface. If a second target
+plus workspaces buys nothing here and costs extra config. If a second target
 appears, promote then.
 
 **Next 15, not 16.** 16 is current, but this is a time-boxed build on a stack the
@@ -210,10 +210,10 @@ upgrade is a version bump away.
 
 **The official SDK, not hand-rolled fetch.** It ships types and stream handling.
 The version skew against the server is the one real risk, which is why the wire
-is documented above — if the SDK fights us, `client.fetch()` and raw routes are
+is documented above. If the SDK fights us, `client.fetch()` and raw routes are
 right there.
 
-**Tailwind 4, no component library.** The whole surface is a header, chips, a
+**Tailwind 4, no component library.** The whole UI is a header, chips, a
 textarea, a rail, and a strip. A component library would be more code, not less.
 
 **Dark, IBM Plex, one warm accent.** The brief asked for a control room, not a

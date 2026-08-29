@@ -63,7 +63,7 @@ export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: J
             />
 
             <div className="mt-3 flex items-center gap-3">
-              {/* TODO(harness): POST /api/v1/sessions/{id}/turns via lib/harness. */}
+              {/* TODO(#2): POST /api/v1/sessions/{id}/turns via lib/harness. */}
               <button
                 type="button"
                 disabled={!question.trim() || selected.length === 0}
@@ -81,7 +81,7 @@ export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: J
             <h2 className="text-ink-muted mb-3 font-mono text-xs tracking-wide uppercase">
               Stream
             </h2>
-            {/* TODO(harness): render TurnStreamingEvent items from subscribeToTurn. */}
+            {/* TODO(#3): render TurnStreamingEvent items from subscribeToTurn. */}
             <p className="text-ink-faint text-sm">
               Nothing yet. Turn events land here as the council answers.
             </p>
@@ -93,7 +93,7 @@ export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: J
         </aside>
       </div>
 
-      {/* TODO(harness): show when a tool.approval_required event arrives. */}
+      {/* TODO(#4): show when a tool.approval_required event arrives. */}
       <ApprovalStrip />
     </div>
   );
