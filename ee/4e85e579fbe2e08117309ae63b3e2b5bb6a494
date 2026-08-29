@@ -1,0 +1,27 @@
+lib/council/planTurn.test.ts
+  s_bbc55387da5bfd::t_17f03bb7e5afb9 1-54
+lib/council/useCouncilStream.ts
+  s_bbc55387da5bfd::t_e2a77439e36ab6 4,58-59
+  s_bbc55387da5bfd::t_82798a9814b5d0 162-175,179-186
+lib/council/planTurn.ts
+  s_bbc55387da5bfd::t_63a7f78b39085a 1-37
+app/api/council/route.ts
+  s_bbc55387da5bfd::t_3cfb77aab07192 30-35
+  s_bbc55387da5bfd::t_1fd9e8ccebe622 135-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ee4e85e579fbe2e08117309ae63b3e2b5bb6a494",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
