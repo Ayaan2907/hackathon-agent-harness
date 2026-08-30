@@ -118,6 +118,10 @@ async function ensureLedgerRegistered(mcpUrl: string) {
 let webSearchAvailable: boolean | undefined;
 
 async function hasWebSearch(): Promise<boolean> {
+  // Opt-in. A registered but non-functioning server is worse than none: it
+  // attaches, the model calls it, and every turn fills the log with transport
+  // errors while the answer quietly degrades.
+  if (env.COUNCIL_WEB_SEARCH === 'off') return false;
   if (webSearchAvailable !== undefined) return webSearchAvailable;
   try {
     const res = await fetch(`${API}/settings/mcp-servers`, { headers: headers() });

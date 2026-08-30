@@ -58,6 +58,16 @@ const schema = z.object({
    * value per process, so the app boots with no secrets configured. Set it
    * explicitly to keep the harness registration stable across restarts.
    */
+  /**
+   * Whether the council may attach the Bright Data MCP server.
+   *
+   * Off by default. The server lists its tools happily but executing them
+   * returns 407 from Bright Data's proxy, so attaching it only produces a
+   * stream of transport errors on every repo-scope turn. Set to `auto` once
+   * the credential actually works, and the route will attach it when the
+   * harness has it configured.
+   */
+  COUNCIL_WEB_SEARCH: z.enum(['off', 'auto']).default('off'),
   LEDGER_SHARED_SECRET: z.string().min(16).default(processLedgerSecret),
 });
 
