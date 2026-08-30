@@ -1,0 +1,23 @@
+app/canvas/_components/CanvasBoard.tsx
+  s_bbc55387da5bfd::t_1a4730b1a0817e 88-104,154-159
+lib/canvas/layout.test.ts
+  s_bbc55387da5bfd::t_f6009fa140a1ee 91-136
+lib/canvas/layout.ts
+  s_bbc55387da5bfd::t_1807fc0c8d1a1c 23,25-30,61-67,69-73,92-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6fe7c47b3bf0b1f239a2726dc1793b6ee882c9d8",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
