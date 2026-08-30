@@ -131,7 +131,8 @@ export function toAgentBody(persona: Persona, brief: string) {
   return {
     name: agentName(meta.id),
     manifest: {
-      model: { name: MODEL, params: { temperature: 0.4 } },
+      // Reasoning models reject temperature; see lib/council/spec.ts.
+      model: { name: MODEL, params: { reasoning_effort: 'medium' } },
       instructions: ['---', ...header, '---', '', brief].join('\n'),
     },
   };

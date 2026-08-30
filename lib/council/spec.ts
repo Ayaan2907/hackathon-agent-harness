@@ -1,5 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { MODEL, packPath } from './personas';
+
+/** Reasoning models take this instead of temperature. */
+const REASONING_EFFORT = 'medium';
 import type { Scope } from './types';
 
 /**
@@ -79,6 +82,12 @@ and never guess at the contents of a codebase you cannot see.`,
 export async function buildCouncilSpec(opts: {
   scope: Scope;
   personaIds: string[];
+  /**
+   * Attach Bright Data for web sources. Off unless the caller has confirmed the
+   * server is configured: naming an unknown MCP server fails session creation
+   * with 422, which would cost repo scope entirely on a bare harness.
+   */
+  webSearch?: boolean;
   /** Absolute URL of this app's MCP endpoint, reachable from the harness. */
   mcpUrl: string;
 }) {
@@ -89,7 +98,10 @@ export async function buildCouncilSpec(opts: {
   const instructions = [ROOT_INSTRUCTIONS, SCOPE_RULES[opts.scope], ...briefs].join('\n\n---\n\n');
 
   return {
-    model: { name: MODEL, params: { temperature: 0.4 } },
+    // Every model the harness offers is a reasoning model, and the provider
+    // rejects `temperature` on those — it was stripped on every turn with a
+    // warning. `reasoning_effort` is the knob these actually take.
+    model: { name: MODEL, params: { reasoning_effort: REASONING_EFFORT } },
     instructions,
     // Plan-only gets no MCP servers at all — the ledger and the web are both
     // unreachable by construction.
@@ -105,7 +117,7 @@ export async function buildCouncilSpec(opts: {
               // One tool; preloading it costs almost nothing.
               preload: true,
             },
-            {
+            ...(opts.webSearch ? [{
               // Sources alongside files: search the web, read a page, cite it.
               // All five tools this server exposes are annotated read-only, and
               // `@read-only` is what makes that structural rather than a
@@ -115,7 +127,7 @@ export async function buildCouncilSpec(opts: {
               // so this adds sources without adding anything to approve.
               name: 'bright-data',
               enable_tools: ['@read-only'],
-            },
+            }] : []),
           ]
         : [],
     config: {

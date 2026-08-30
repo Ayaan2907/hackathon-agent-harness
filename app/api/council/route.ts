@@ -109,6 +109,27 @@ async function ensureLedgerRegistered(mcpUrl: string) {
   });
 }
 
+/**
+ * Whether the harness has Bright Data configured.
+ *
+ * Cached for the process: it is a deployment fact, not a per-request one, and
+ * this sits in front of every repo-scope ask.
+ */
+let webSearchAvailable: boolean | undefined;
+
+async function hasWebSearch(): Promise<boolean> {
+  if (webSearchAvailable !== undefined) return webSearchAvailable;
+  try {
+    const res = await fetch(`${API}/settings/mcp-servers`, { headers: headers() });
+    if (!res.ok) return (webSearchAvailable = false);
+    const servers = (await res.json()).data as { manifest?: { name?: string } }[];
+    webSearchAvailable = servers.some((s) => s.manifest?.name === 'bright-data');
+  } catch {
+    webSearchAvailable = false;
+  }
+  return webSearchAvailable;
+}
+
 /** Creates the turn and hands the harness SSE body straight to the browser. */
 function passthrough(upstream: Response, extra: Record<string, string> = {}) {
   return new Response(upstream.body, {
@@ -167,10 +188,14 @@ export async function POST(request: Request) {
     // spec is only built when a new one is needed.
     let sessionId = body.sessionId;
     if (!sessionId) {
-      const spec = await buildCouncilSpec({
+        const spec = await buildCouncilSpec({
         scope: body.scope,
         personaIds: body.personaIds,
         mcpUrl,
+        // Naming an MCP server the harness does not have fails session creation
+        // with 422, so repo scope would be lost entirely on a bare clone.
+        // Ask before attaching rather than assuming.
+        webSearch: body.scope === 'repo' ? await hasWebSearch() : false,
       });
       const session = await harness('/sessions', {
         method: 'POST',

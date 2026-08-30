@@ -118,7 +118,7 @@ the branch after them.
   plan-only scope and the toggle would compare two different voices.
 - The jobs rail renders from fixtures. Growing a persona from a scraped URL is not
   wired: the configured Bright Data MCP server returns 401 and lists no tools.
-- No fine-tunes. Personas are a model FQN, a temperature, and a written brief.
+- No fine-tunes. Personas are a model FQN, a reasoning effort, and a written brief.
 
 ## License
 
