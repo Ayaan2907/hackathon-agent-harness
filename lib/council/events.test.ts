@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { approvalsFrom, mergeApprovals, statusFromTurnDone } from './events';
+import { approvalsFrom, mergeApprovals, pendingVoices, statusFromTurnDone } from './events';
 
 /**
  * Seam: turning harness events into UI decisions.
@@ -89,5 +89,64 @@ describe('statusFromTurnDone', () => {
 
   it('defaults to done when the harness sends no state', () => {
     expect(statusFromTurnDone({})).toBe('done');
+  });
+});
+
+describe('pendingVoices', () => {
+  const threads = [
+    { id: 'main', title: 'Council' },
+    { id: 'thread-shipper', title: 'shipper' },
+    { id: 'thread-hostile', title: 'hostile' },
+  ];
+
+  function call(threadId: string, toolCallId: string) {
+    return { threadId, toolCallId, toolName: 'record_decision' };
+  }
+
+  it('names the subagent whose thread parked the call', () => {
+    // "3 calls waiting" tells the reader nothing about who to trust. The point
+    // of the strip is which voice wants the write.
+    const voices = pendingVoices([call('thread-hostile', 'a')], threads);
+
+    expect(voices).toEqual([
+      { threadId: 'thread-hostile', name: 'hostile', calls: [call('thread-hostile', 'a')] },
+    ]);
+  });
+
+  it('names the root thread when the agent itself parked the call', () => {
+    // Both happen for real: a council fans out and each subagent parks its own
+    // write, but a single-voice ask parks on `main`.
+    expect(pendingVoices([call('main', 'a')], threads)[0]?.name).toBe('Council');
+  });
+
+  it('groups several calls from one voice under that voice', () => {
+    const voices = pendingVoices(
+      [call('thread-shipper', 'a'), call('thread-shipper', 'b')],
+      threads,
+    );
+
+    expect(voices).toHaveLength(1);
+    expect(voices[0]?.calls.map((c) => c.toolCallId)).toEqual(['a', 'b']);
+  });
+
+  it('keeps the voices in the order their calls parked', () => {
+    const voices = pendingVoices(
+      [call('thread-hostile', 'a'), call('main', 'b'), call('thread-shipper', 'c')],
+      threads,
+    );
+
+    expect(voices.map((v) => v.name)).toEqual(['hostile', 'Council', 'shipper']);
+  });
+
+  it('still names a thread it has never seen announced', () => {
+    // Rehydrating a session mid-conversation can miss the `thread.created` that
+    // named a voice. Showing a bare UUID beats dropping the approval.
+    expect(
+      pendingVoices([call('4a002849-42d2-4d67-8a76-8efc0e4daf9c', 'a')], threads)[0]?.name,
+    ).toBe('thread 4a002849');
+  });
+
+  it('has nothing to show when nothing is pending', () => {
+    expect(pendingVoices([], threads)).toEqual([]);
   });
 });

@@ -53,6 +53,47 @@ export function mergeApprovals(existing: PendingCall[], event: ApprovalEvent): P
   return added.length === 0 ? existing : [...existing, ...added];
 }
 
+/** The calls one voice has parked, with that voice named. */
+export interface PendingVoice {
+  threadId: string;
+  /** The subagent's name, or `Council` for the root thread. */
+  name: string;
+  calls: PendingCall[];
+}
+
+/**
+ * Says *who* is waiting, not just how many calls are.
+ *
+ * The gate fires on whichever thread wanted the write — `main` when the agent
+ * asks for itself, a subagent thread when a council fans out — and a strip that
+ * only counts calls gives the reader nothing to weigh the decision against.
+ * Threads come from the exchange, where `thread.created` named them.
+ */
+export function pendingVoices(
+  pending: PendingCall[],
+  threads: { id: string; title: string }[],
+): PendingVoice[] {
+  const voices: PendingVoice[] = [];
+
+  for (const call of pending) {
+    const known = voices.find((v) => v.threadId === call.threadId);
+    if (known) {
+      known.calls.push(call);
+      continue;
+    }
+
+    // A rehydrated session can miss the `thread.created` that named a voice.
+    // A short form of the id is worse than a name and far better than hiding an
+    // approval the turn cannot finish without.
+    const title =
+      threads.find((t) => t.id === call.threadId)?.title ?? `thread ${call.threadId.slice(0, 8)}`;
+
+    voices.push({ threadId: call.threadId, name: title, calls: [call] });
+  }
+
+  return voices;
+}
+
 /** A turn can end in failure; only a `done` state is actually a success. */
 export function statusFromTurnDone(event: { state?: { status?: string } }): 'done' | 'error' {
   const status = event.state?.status;
