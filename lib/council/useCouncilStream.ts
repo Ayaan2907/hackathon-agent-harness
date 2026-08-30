@@ -145,23 +145,43 @@ export function useCouncilStream() {
   );
 
   /** Reopens a past session and rebuilds its conversation from the event log. */
+  /**
+   * Generation counter for reopen requests.
+   *
+   * Clicking through the session list fires overlapping fetches, and without
+   * this a slow earlier response lands after a fast later one — leaving the
+   * console showing a conversation the user is no longer looking at, with the
+   * session ref pointing somewhere else again. Only the newest request is
+   * allowed to write.
+   */
+  const resumeGeneration = useRef(0);
+
+  /** A session read back from history rather than started here. */
+  const resumedOnly = useRef(false);
+
   const resume = useCallback(async (id: string) => {
+    const generation = (resumeGeneration.current += 1);
+    const isStale = () => generation !== resumeGeneration.current;
+
     setError(undefined);
     setBusy(true);
     try {
       const res = await fetch(`/api/sessions?id=${encodeURIComponent(id)}`);
       const body = await res.json();
+      if (isStale()) return;
       if (!res.ok) {
         setError(String(body.error ?? `HTTP ${res.status}`));
         return;
       }
       sessionId.current = id;
       selection.current = undefined;
+      resumedOnly.current = true;
       setTranscript(body.transcript as Exchange[]);
     } catch (e) {
+      if (isStale()) return;
       setError(e instanceof Error ? e.message : 'could not reopen the session');
     } finally {
-      setBusy(false);
+      if (!isStale()) setBusy(false);
     }
   }, []);
 
@@ -184,7 +204,10 @@ export function useCouncilStream() {
     // immediately followed by a transcript update, so the render that shows it
     // is always the one after it changed.
     sessionId: sessionId.current,
-    pending: current?.pending ?? [],
+    // Only this process's own sessions can be resumed — /api/council rejects
+    // anything else with a 403. Surfacing approvals on a rehydrated session
+    // would offer buttons whose every press fails.
+    pending: resumedOnly.current ? [] : (current?.pending ?? []),
     status,
     error,
     ask,

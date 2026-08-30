@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { env } from '@/lib/config/env';
+import { parseSessionId } from '@/lib/council/sessionId';
 import { projectTranscript, type SessionEventItem } from '@/lib/council/transcript';
 
 /**
@@ -25,8 +26,8 @@ export const dynamic = 'force-dynamic';
 
 const API = `${env.TRUEFORGE_BASE_URL}/api/v1`;
 
-/** Session ids are path segments upstream; bound them before they get there. */
-const SessionId = z.string().min(1).max(64);
+/** How many event pages to follow before giving up on a very long session. */
+const MAX_PAGES = 20;
 
 const SessionPage = z.object({
   data: z.array(
@@ -47,6 +48,7 @@ const EventPage = z.object({
       event: z.record(z.string(), z.unknown()),
     }),
   ),
+  pagination: z.object({ next_page_token: z.string().nullish() }).partial().optional(),
 });
 
 async function harness(path: string) {
@@ -74,17 +76,34 @@ export async function GET(request: Request) {
       });
     }
 
-    const id = SessionId.safeParse(raw);
-    if (!id.success) return Response.json({ error: 'bad session id' }, { status: 422 });
+    const id = parseSessionId(raw);
+    if (!id) return Response.json({ error: 'bad session id' }, { status: 422 });
 
-    // ponytail: one page, so a session past ~100 events rehydrates only its
-    // recent turns. Follow `pagination.next_page_token` when that bites.
-    const page = EventPage.parse(await harness(`/sessions/${id.data}/events?limit=100`));
+    // One page silently truncated any session past ~100 events — and a
+    // transcript that quietly drops its older half is worse than no transcript,
+    // because nothing on screen says it happened. Follow the token instead,
+    // bounded so a pathological session cannot spin here.
+    const events: SessionEventItem[] = [];
+    let token: string | undefined;
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const query = new URLSearchParams({ limit: '100' });
+      if (token) query.set('page_token', token);
+
+      const body = EventPage.parse(
+        await harness(`/sessions/${encodeURIComponent(id)}/events?${query}`),
+      );
+      events.push(...(body.data as unknown as SessionEventItem[]));
+
+      token = body.pagination?.next_page_token ?? undefined;
+      if (!token) break;
+    }
 
     return Response.json({
-      id: id.data,
+      id,
+      truncated: Boolean(token),
       // The harness returns newest event first; `projectTranscript` owns that.
-      transcript: projectTranscript(page.data as unknown as SessionEventItem[]),
+      transcript: projectTranscript(events),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown harness error';

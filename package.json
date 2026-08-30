@@ -9,7 +9,7 @@
     "url": "https://github.com/Ayaan2907/hackathon-agent-harness.git"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
