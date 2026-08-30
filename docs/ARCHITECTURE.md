@@ -134,7 +134,7 @@ A pending approval is detected from `turn.done` carrying a non-empty
 
 ```jsonc
 {
-  "model": { "name": "openai/gpt-5-4-mini", "params": { "temperature": 0.4 } },
+  "model": { "name": "openai/gpt-5-4-mini", "params": { "reasoning_effort": "medium" } },
   "instructions": "...",
   "mcp_servers": [
     {

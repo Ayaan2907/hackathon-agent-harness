@@ -25,6 +25,20 @@ git push and a settings entry.
 
 See [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md#skills-are-git-only).
 
+## A pack is a seed, not the store
+
+`GET /api/personas` writes every pack here into the harness as a saved agent
+named `persona-<id>`, once, while the registry is empty. After that the harness
+is where personas live: `POST /api/personas` adds one this repo never shipped,
+and `DELETE /api/personas?id=` removes it, neither of which touches disk.
+
+Deleting every persona brings the packs back on the next read, which is the
+direction worth failing in — the console is never left with no voices.
+
+The saved manifest is model plus instructions, nothing else. Metadata rides in a
+header on the instructions, because a TrueForge agent record is
+`{ id, name, manifest }` and has nowhere else to keep it.
+
 ## Provenance
 
 `origin: fixture` packs ship with the repo. `origin: built` packs were generated

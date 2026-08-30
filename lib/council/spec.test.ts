@@ -15,13 +15,32 @@ describe('buildCouncilSpec', () => {
     const spec = await buildCouncilSpec({ ...base, scope: 'repo' });
 
     expect(spec.config.sandbox.enabled).toBe(true);
-    expect(spec.mcp_servers).toHaveLength(1);
-    expect(spec.mcp_servers[0]?.require_approval_for_tools).toContain('record_decision');
+    expect(spec.mcp_servers).toContainEqual(
+      expect.objectContaining({
+        name: 'outside-ledger',
+        require_approval_for_tools: ['record_decision'],
+      }),
+    );
+  });
+
+  it('gives repo scope read-only web research and no new approval surface', async () => {
+    // webSearch is opt-in now: an unconfigured MCP server 422s session creation.
+    const spec = await buildCouncilSpec({ ...base, scope: 'repo', webSearch: true });
+
+    // `@read-only` is the enable selector, so only tools the server annotates
+    // read-only are reachable at all — today that is all five Bright Data
+    // tools. `require_approval_for_tools` is left at the harness default of
+    // `["@write", "@destructive"]`, which currently matches nothing here: the
+    // council gains sources, not a second thing to approve. The default is
+    // still what stops a write tool added later from arriving ungated.
+    expect(spec.mcp_servers).toContainEqual({ name: 'bright-data', enable_tools: ['@read-only'] });
   });
 
   it('gives plan-only scope no sandbox and no write tools at all', async () => {
     const spec = await buildCouncilSpec({ ...base, scope: 'plan' });
 
+    // Not "no ledger" — no MCP servers of any kind, Bright Data included. A
+    // plan-only answer cannot read a file, reach the web, or write anywhere.
     expect(spec.config.sandbox.enabled).toBe(false);
     expect(spec.mcp_servers).toEqual([]);
   });
@@ -60,7 +79,11 @@ describe('buildCouncilSpec persona ids', () => {
     // filesystem path, so anything that escapes profiles/ must be refused
     // before it reaches readFile.
     await expect(
-      buildCouncilSpec({ scope: 'plan', personaIds: [id], mcpUrl: 'http://localhost:3000/api/mcp' }),
+      buildCouncilSpec({
+        scope: 'plan',
+        personaIds: [id],
+        mcpUrl: 'http://localhost:3000/api/mcp',
+      }),
     ).rejects.toThrow(/persona/i);
   });
 
@@ -73,4 +96,39 @@ describe('buildCouncilSpec persona ids', () => {
       }),
     ).rejects.toThrow(/persona/i);
   });
-})
+});
+
+describe('model params and optional web search', () => {
+  it('asks for reasoning effort, never temperature', async () => {
+    // Every model in the harness catalog is a reasoning model, and the provider
+    // rejects temperature on those: "temperature is not supported for
+    // reasoning models". It was being silently stripped on every single turn.
+    const spec = await buildCouncilSpec({ ...base, scope: 'plan' });
+
+    expect(spec.model.params).not.toHaveProperty('temperature');
+    expect(spec.model.params.reasoning_effort).toBeDefined();
+  });
+
+  it('omits Bright Data when the harness does not have it', async () => {
+    // Naming an unconfigured MCP server fails session creation outright with
+    // 422 Unknown MCP server, so a clone pointed at a bare harness would lose
+    // repo scope entirely — and the README promises it works on a fresh clone.
+    const spec = await buildCouncilSpec({ ...base, scope: 'repo', webSearch: false });
+
+    expect(spec.mcp_servers.map((s) => s.name)).toEqual(['outside-ledger']);
+  });
+
+  it('includes Bright Data read-only when it is available', async () => {
+    const spec = await buildCouncilSpec({ ...base, scope: 'repo', webSearch: true });
+    const web = spec.mcp_servers.find((s) => s.name === 'bright-data');
+
+    expect(web?.enable_tools).toEqual(['@read-only']);
+  });
+
+  it('never gives plan-only scope the web, even when it is available', async () => {
+    const spec = await buildCouncilSpec({ ...base, scope: 'plan', webSearch: true });
+
+    expect(spec.mcp_servers).toEqual([]);
+    expect(spec.config.sandbox.enabled).toBe(false);
+  });
+});
