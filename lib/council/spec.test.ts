@@ -8,7 +8,8 @@ import { buildCouncilSpec } from './spec';
  * difference is real rather than a sentence in the prompt.
  */
 
-const base = { personaIds: ['hostile'], mcpUrl: 'http://localhost:3000/api/mcp' };
+const base = {
+  repoUrl: 'https://github.com/acme/widgets.git', personaIds: ['hostile'], mcpUrl: 'http://localhost:3000/api/mcp' };
 
 describe('buildCouncilSpec', () => {
   it('gives repo scope a sandbox and the approval-gated ledger', async () => {
@@ -132,3 +133,30 @@ describe('model params and optional web search', () => {
     expect(spec.config.sandbox.enabled).toBe(false);
   });
 });
+
+describe('which repository repo scope reads', () => {
+  it('clones the repository it was given, not a hard-coded one', async () => {
+    const spec = await buildCouncilSpec({
+      ...base,
+      scope: 'repo',
+      repoUrl: 'https://github.com/acme/widgets.git',
+    });
+
+    expect(spec.instructions).toContain('https://github.com/acme/widgets.git');
+    expect(spec.instructions).not.toContain('hackathon-agent-harness');
+  });
+
+  it('refuses repo scope with no repository rather than reading the wrong one', async () => {
+    // Silently cloning someone else's repo and calling it "This repo" is the
+    // failure this replaced; erroring is the honest alternative.
+    await expect(
+      buildCouncilSpec({ ...base, scope: 'repo', repoUrl: undefined }),
+    ).rejects.toThrow(/COUNCIL_REPO_URL/);
+  });
+
+  it('does not mention any repository in plan-only scope', async () => {
+    const spec = await buildCouncilSpec({ ...base, scope: 'plan' });
+
+    expect(spec.instructions).not.toContain('git clone');
+  });
+})
