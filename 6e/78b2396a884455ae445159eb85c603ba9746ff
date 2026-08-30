@@ -1,0 +1,34 @@
+app/api/council/route.ts
+  s_bbc55387da5bfd::t_497564bfb85021 112-132,191,195-198
+docs/ARCHITECTURE.md
+  s_bbc55387da5bfd::t_497564bfb85021 137
+README.md
+  s_bbc55387da5bfd::t_497564bfb85021 121
+lib/council/spec.test.ts
+  s_bbc55387da5bfd::t_eb5fe836008cae 100-134
+  s_bbc55387da5bfd::t_5d5c3b9ee214cb 27
+  s_bbc55387da5bfd::t_2c5c8802bc50fc 28
+lib/council/spec.ts
+  s_bbc55387da5bfd::t_addd1b4fbd00b3 85-90,101-104,120,130
+  s_bbc55387da5bfd::t_5d5c3b9ee214cb 3-5
+lib/council/personas.ts
+  s_bbc55387da5bfd::t_addd1b4fbd00b3 134-135
+agents/council.agent.json
+  s_bbc55387da5bfd::t_497564bfb85021 7,14-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6e78b2396a884455ae445159eb85c603ba9746ff",
+  "prompts": {},
+  "sessions": {
+    "s_bbc55387da5bfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "753e1bdc-e33e-48d6-869d-6b1ec5e39ced",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ayaan Kaifullah <ayaanansari7921@outlook.com>"
+    }
+  }
+}
