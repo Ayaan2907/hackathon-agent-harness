@@ -26,8 +26,7 @@ import type { Scope } from './types';
 /** Gated by literal name so the pause does not depend on write-annotation inference. */
 const LEDGER_TOOL = 'record_decision';
 
-/** The sandbox starts empty, so repo scope clones this to have something to read. */
-const REPO_URL = 'https://github.com/Ayaan2907/hackathon-agent-harness.git';
+
 
 async function personaInstructions(id: string): Promise<string> {
   try {
@@ -57,7 +56,7 @@ const SCOPE_RULES: Record<Scope, string> = {
 
 Before answering, clone the repository and read it:
 
-    git clone --depth 1 ${REPO_URL} repo && ls repo
+    git clone --depth 1 {{REPO_URL}} repo && ls repo
 
 Then read the files that actually bear on the question and cite their paths.
 Never claim what is in a file you did not open. If a path you expected is
@@ -83,6 +82,11 @@ export async function buildCouncilSpec(opts: {
   scope: Scope;
   personaIds: string[];
   /**
+   * The repository to clone into the sandbox. Required for repo scope — the
+   * sandbox starts empty and there is nothing to read without it.
+   */
+  repoUrl?: string;
+  /**
    * Attach Bright Data for web sources. Off unless the caller has confirmed the
    * server is configured: naming an unknown MCP server fails session creation
    * with 422, which would cost repo scope entirely on a bare harness.
@@ -95,7 +99,16 @@ export async function buildCouncilSpec(opts: {
     opts.personaIds.map(async (id) => `## Persona: ${id}\n\n${await personaInstructions(id)}`),
   );
 
-  const instructions = [ROOT_INSTRUCTIONS, SCOPE_RULES[opts.scope], ...briefs].join('\n\n---\n\n');
+  if (opts.scope === 'repo' && !opts.repoUrl) {
+    throw new Error(
+      'Repo scope needs a repository to read. Set COUNCIL_REPO_URL, or run the app inside a git checkout with an origin remote.',
+    );
+  }
+
+  const scopeRules =
+    opts.scope === 'repo' ? SCOPE_RULES.repo.replace('{{REPO_URL}}', opts.repoUrl!) : SCOPE_RULES.plan;
+
+  const instructions = [ROOT_INSTRUCTIONS, scopeRules, ...briefs].join('\n\n---\n\n');
 
   return {
     // Every model the harness offers is a reasoning model, and the provider

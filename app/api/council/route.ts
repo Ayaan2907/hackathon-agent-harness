@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { env } from '@/lib/config/env';
+import { resolveRepoUrl } from '@/lib/council/resolveRepo';
 import { buildCouncilSpec } from '@/lib/council/spec';
 import { LEDGER_AUTH_HEADER, LEDGER_SECRET } from '@/lib/council/ledgerAuth';
 import { grantWrite } from '@/lib/council/writeBudget';
@@ -199,6 +200,7 @@ export async function POST(request: Request) {
         // Naming an MCP server the harness does not have fails session creation
         // with 422, so repo scope would be lost entirely on a bare clone.
         // Ask before attaching rather than assuming.
+        repoUrl: body.scope === 'repo' ? ((await resolveRepoUrl()) ?? undefined) : undefined,
         webSearch: body.scope === 'repo' ? await hasWebSearch() : false,
       });
       const session = await harness('/sessions', {

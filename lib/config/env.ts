@@ -67,6 +67,12 @@ const schema = z.object({
    * the credential actually works, and the route will attach it when the
    * harness has it configured.
    */
+  /**
+   * The repository repo scope clones into the sandbox. Falls back to this
+   * checkout's `origin` remote. Set it when the app runs somewhere other than
+   * the repository the council should read.
+   */
+  COUNCIL_REPO_URL: z.string().optional(),
   COUNCIL_WEB_SEARCH: z.enum(['off', 'auto']).default('off'),
   LEDGER_SHARED_SECRET: z.string().min(16).default(processLedgerSecret),
 });
