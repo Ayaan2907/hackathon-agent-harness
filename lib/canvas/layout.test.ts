@@ -88,3 +88,49 @@ describe('saveWindows and loadWindows', () => {
     expect(loadWindows(storage)).toEqual([]);
   });
 });
+
+describe('layout persistence hardening', () => {
+  it('drops duplicate ids, which would make focus permanently ambiguous', () => {
+    // The canvas collapses shapes by id, so two entries sharing one id resolve
+    // to a single shape that matches both — and the command bar reports
+    // "ambiguous" forever with no way for the user to fix it.
+    const stored = JSON.stringify([
+      { id: 'w1', title: 'One', x: 0, y: 0, w: 320, h: 240 },
+      { id: 'w1', title: 'Duplicate', x: 40, y: 40, w: 320, h: 240 },
+      { id: 'w2', title: 'Two', x: 80, y: 0, w: 320, h: 240 },
+    ]);
+
+    const windows = loadWindows({ getItem: () => stored, setItem: () => {} });
+
+    expect(windows.map((w) => w.id)).toEqual(['w1', 'w2']);
+    expect(windows[0]?.title).toBe('One');
+  });
+
+  it.each([
+    ['zero width', { w: 0, h: 240 }],
+    ['negative width', { w: -320, h: 240 }],
+    ['zero height', { w: 320, h: 0 }],
+    ['negative height', { w: 320, h: -240 }],
+  ])('rejects a stored window with %s', (_label, size) => {
+    // The interactive clamp does not run on restore, so a bad box would go
+    // straight into canvas geometry.
+    const stored = JSON.stringify([{ id: 'w1', title: 'One', x: 0, y: 0, ...size }]);
+
+    expect(loadWindows({ getItem: () => stored, setItem: () => {} })).toEqual([]);
+  });
+
+  it('does not throw when storage refuses the write', () => {
+    // Quota exceeded, Safari private mode, storage disabled by policy. This
+    // runs inside a React effect, so an escaping exception takes the canvas
+    // down rather than losing a layout save.
+    const storage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new DOMException('QuotaExceededError');
+      },
+    };
+
+    expect(() => saveWindows(storage, [{ id: 'w1', title: 'One', x: 0, y: 0, w: 320, h: 240 }]))
+      .not.toThrow();
+  });
+});

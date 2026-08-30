@@ -20,12 +20,14 @@ export const LAYOUT_KEY = 'outside:canvas:layout';
 
 const layoutSchema = z.array(
   z.object({
-    id: z.string(),
+    id: z.string().min(1),
     title: z.string(),
-    x: z.number(),
-    y: z.number(),
-    w: z.number(),
-    h: z.number(),
+    x: z.number().finite(),
+    y: z.number().finite(),
+    // A zero or negative box goes straight into canvas geometry on restore —
+    // the interactive minimum-size clamp only runs while dragging.
+    w: z.number().positive(),
+    h: z.number().positive(),
   }),
 );
 
@@ -56,8 +58,19 @@ export function removeWindow(windows: SessionWindow[], id: string): SessionWindo
   return windows.filter((w) => w.id !== id);
 }
 
+/**
+ * Persists the layout, and treats failure as acceptable.
+ *
+ * This is called from a React effect on every layout change, so a throw from
+ * quota exhaustion, private browsing, or storage disabled by policy would take
+ * the canvas down. Losing a layout save is the smaller loss.
+ */
 export function saveWindows(storage: LayoutStorage, windows: SessionWindow[]): void {
-  storage.setItem(LAYOUT_KEY, JSON.stringify(windows));
+  try {
+    storage.setItem(LAYOUT_KEY, JSON.stringify(windows));
+  } catch {
+    // Layout is a convenience, not data worth crashing over.
+  }
 }
 
 /**
@@ -76,7 +89,16 @@ export function loadWindows(storage: LayoutStorage): SessionWindow[] {
 
   try {
     const parsed = layoutSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data : [];
+    if (!parsed.success) return [];
+
+    // Two entries sharing an id collapse to one canvas shape, which then
+    // matches both — leaving focus permanently ambiguous with no way for the
+    // user to resolve it. First entry wins.
+    const byId = new Map<string, SessionWindow>();
+    for (const window of parsed.data) {
+      if (!byId.has(window.id)) byId.set(window.id, window);
+    }
+    return [...byId.values()];
   } catch {
     return [];
   }

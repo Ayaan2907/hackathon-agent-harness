@@ -85,6 +85,23 @@ export function CanvasBoard() {
       ({ changes }) => {
         setWindows((prev) => {
           let next = prev;
+          // Undoing a deletion, or redoing a creation, brings the shape back
+          // through `added`. Without this the shape reappears on the canvas but
+          // has no layout entry, so it is invisible to focus, count and
+          // persistence — a window you can see but cannot talk to.
+          for (const record of Object.values(changes.added)) {
+            if (!isSessionWindow(record)) continue;
+            const id = windowIdOf(record.id);
+            if (next.some((w) => w.id === id)) continue;
+            next = addWindow(next, {
+              id,
+              title: record.props.title,
+              x: record.x,
+              y: record.y,
+              w: record.props.w,
+              h: record.props.h,
+            });
+          }
           for (const record of Object.values(changes.removed)) {
             if (isSessionWindow(record)) next = removeWindow(next, windowIdOf(record.id));
           }
@@ -134,6 +151,12 @@ export function CanvasBoard() {
         ...NEW_WINDOW_SIZE,
       });
     });
+    // Focus resolution prefers the current selection, so a window selected
+    // before pressing Add would keep the command bar pointed at it and the
+    // next question would land in the wrong window. Clear the selection so the
+    // new window is unambiguously the target.
+    editor.selectNone();
+    setSelectedIds([]);
     // The shape does not exist until the next render, so point the command bar
     // at the new window directly rather than waiting to select it.
     setLastFocusedId(id);
