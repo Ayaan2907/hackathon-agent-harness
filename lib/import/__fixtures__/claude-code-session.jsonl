@@ -1,0 +1,14 @@
+{"type":"bridge-session","bridgeSessionId":"11111111-2222-3333-4444-555555555555","lastSequenceNum":0,"sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}
+{"type":"mode","mode":"plan","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}
+{"type":"user","isMeta":true,"uuid":"u-0","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","message":{"role":"user","content":"Injected context the operator never typed."}}
+{"type":"user","uuid":"u-1","cwd":"/home/example/widget-shop","gitBranch":"main","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","message":{"role":"user","content":"Why does the cart total drop to zero after a refresh?"}}
+{"type":"assistant","uuid":"a-1","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Private reasoning the transcript should not carry."},{"type":"text","text":"The total is recomputed from an empty basket before hydration finishes."},{"type":"tool_use","id":"toolu_01","name":"Read","input":{"file_path":"/home/example/widget-shop/cart.ts"}}]}}
+{"type":"attachment","uuid":"at-1","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","attachment":{"type":"file","path":"cart.ts"}}
+{"type":"user","uuid":"u-2","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_01","content":"export const total = (items) => items.reduce(add, 0);"}]}}
+{"type":"assistant","isSidechain":true,"uuid":"a-2","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","message":{"role":"assistant","content":[{"type":"text","text":"Subagent chatter that belongs to its own thread."}]}}
+{"type":"queue-operation","operation":"enqueue","reason":"typed while busy","content":"and check the tests","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}
+{"type":"user","uuid":"u-3","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","message":{"role":"user","content":[{"type":"text","text":"Fix it and add a test."},{"type":"image","source":{"type":"base64","media_type":"image/png","data":"iVBORw0KGgo="}}]}}
+{"type":"assistant","uuid":"a-3","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","message":{"role":"assistant","content":[{"type":"text","text":"Done. The basket is read after hydration now, and the refresh path has a test."}]}}
+{"type":"last-prompt","lastPrompt":"Fix it and add a test.","leafUuid":"a-3","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}
+
+{"type":"assistant","uuid":"a-4","sessionId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","message":{"role":"assistant","content":[{"type":"text","tex
