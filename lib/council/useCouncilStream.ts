@@ -178,5 +178,17 @@ export function useCouncilStream() {
         ? 'idle'
         : settled;
 
-  return { transcript, pending: current?.pending ?? [], status, error, ask, decide, resume };
+  return {
+    transcript,
+    // Read from the ref rather than mirrored into state. Every write to it is
+    // immediately followed by a transcript update, so the render that shows it
+    // is always the one after it changed.
+    sessionId: sessionId.current,
+    pending: current?.pending ?? [],
+    status,
+    error,
+    ask,
+    decide,
+    resume,
+  };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ApprovalStrip } from './_components/ApprovalStrip';
 import { JobsRail } from './_components/JobsRail';
 import { PersonaChip } from './_components/PersonaChip';
@@ -89,14 +89,82 @@ function ExchangeBlock({ exchange }: { exchange: Exchange }) {
   );
 }
 
+interface SessionSummary {
+  id: string;
+  title: string | null;
+  updatedAt: string;
+}
+
+/**
+ * Past conversations, newest first.
+ *
+ * A session created before this process started can be read but not continued:
+ * `/api/council` only accepts approvals and follow-ups for sessions it handed
+ * out. Reopening one is a way to look back, not to pick the thread up.
+ */
+function SessionList({
+  sessions,
+  currentId,
+  onOpen,
+}: {
+  sessions: SessionSummary[];
+  currentId: string | undefined;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <section>
+      <h2 className="text-ink-muted mb-3 font-mono text-xs tracking-wide uppercase">Sessions</h2>
+      {sessions.length === 0 ? (
+        <p className="text-ink-faint text-xs">No past sessions on this harness yet.</p>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {sessions.map((s) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(s.id)}
+                aria-current={s.id === currentId ? 'true' : undefined}
+                className={`hover:border-line-strong w-full rounded-md border px-2 py-1.5 text-left text-xs ${
+                  s.id === currentId ? 'border-line-strong text-ink' : 'border-line text-ink-muted'
+                }`}
+              >
+                <span className="line-clamp-2">{s.title ?? 'Untitled session'}</span>
+                <span className="text-ink-faint mt-0.5 block font-mono text-[10px]">
+                  {new Date(s.updatedAt).toLocaleString()}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: Job[] }) {
   const [scope, setScope] = useState<Scope>('repo');
   const [selected, setSelected] = useState<string[]>(personas.map((p) => p.id));
   const [question, setQuestion] = useState('');
-  const { transcript, pending, status, error, ask, decide } = useCouncilStream();
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const { transcript, sessionId, pending, status, error, ask, decide, resume } = useCouncilStream();
 
   const busy = status === 'streaming' || status === 'waiting';
   const current = transcript.at(-1);
+
+  // Refreshed whenever the console settles, so a session started here shows up
+  // without a reload. The list is a convenience: if it fails to load, an empty
+  // rail is a better outcome than an error banner over the ask box.
+  useEffect(() => {
+    if (status === 'streaming') return;
+    let live = true;
+    fetch('/api/sessions')
+      .then((r) => r.json())
+      .then((b) => live && setSessions(b.sessions ?? []))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [status]);
 
   function togglePersona(id: string) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -195,7 +263,8 @@ export function ConsoleClient({ personas, jobs }: { personas: Persona[]; jobs: J
           </section>
         </main>
 
-        <aside className="border-line w-72 shrink-0 border-l px-5 py-8">
+        <aside className="border-line flex w-72 shrink-0 flex-col gap-8 border-l px-5 py-8">
+          <SessionList sessions={sessions} currentId={sessionId} onOpen={resume} />
           <JobsRail jobs={jobs} />
         </aside>
       </div>
